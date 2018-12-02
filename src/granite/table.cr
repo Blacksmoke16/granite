@@ -9,6 +9,8 @@ macro disable_granite_docs?(stmt)
 end
 
 module Granite::Table
+  property id : Int64? = nil
+
   macro included
     macro inherited
       disable_granite_docs? SETTINGS = {} of Nil => Nil
@@ -24,50 +26,6 @@ module Granite::Table
 
   # specify the table name to use otherwise it will use the model's name
   macro table_name(name)
-    {% SETTINGS[:table_name] = name.id %}
-  end
-
-  macro primary(decl, **options)
-    {% PRIMARY[:name] = decl.var %}
-    {% PRIMARY[:type] = decl.type %}
-    {% PRIMARY[:auto] = ([true, false, :uuid].includes? options[:auto]) ? options[:auto] : true %}
-    {% PRIMARY[:options] = options %}
-  end
-
-  macro __process_table
-    {% name_space = @type.name.gsub(/::/, "_").underscore.id %}
-    {% table_name = SETTINGS[:table_name] || name_space %}
-    {% primary_name = PRIMARY[:name] %}
-    {% primary_type = PRIMARY[:type] %}
-    {% primary_auto = PRIMARY[:auto] %}
-
-    @@table_name = "{{table_name}}"
-    @@primary_name = "{{primary_name}}"
-    @@primary_auto = "{{primary_auto}}"
-    @@primary_type = "{{primary_type}}"
-
-    disable_granite_docs? def self.table_name
-      @@table_name
-    end
-
-    disable_granite_docs? def self.primary_name
-      @@primary_name
-    end
-
-    disable_granite_docs? def self.primary_type
-      @@primary_type
-    end
-
-    disable_granite_docs? def self.primary_auto
-      @@primary_auto
-    end
-
-    disable_granite_docs? def self.quoted_table_name
-      @@adapter.quote(table_name)
-    end
-
-    disable_granite_docs? def self.quote(column_name)
-      @@adapter.quote(column_name)
-    end
+    class_getter table_name : String = {{name.stringify}}
   end
 end

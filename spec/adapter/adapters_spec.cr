@@ -1,6 +1,7 @@
 require "../spec_helper"
 
 class Foo < Granite::Base
+  table_name foos
   adapter mysql
 end
 

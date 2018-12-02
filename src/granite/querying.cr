@@ -4,23 +4,11 @@ module Granite::Querying
 
   macro extended
     macro __process_querying
-      \{% primary_name = PRIMARY[:name] %}
-      \{% primary_type = PRIMARY[:type] %}
-
       # Create the from_sql method
       disable_granite_docs? def self.from_sql(result)
         model = \{{@type.name.id}}.new
         model.set_attributes(result)
         model
-      end
-
-      disable_granite_docs? def set_attributes(result : DB::ResultSet)
-        # Loading from DB means existing records.
-        @new_record = false
-        \{% for name, options in FIELDS %}
-          self.\{{name.id}} = result.read(Union(\{{options[:type].id}} | Nil))
-        \{% end %}
-        self
       end
     end
   end
@@ -58,12 +46,12 @@ module Granite::Querying
 
   # find returns the row with the primary key specified. Otherwise nil.
   def find(value)
-    first("WHERE #{@@primary_name} = ?", value)
+    first("WHERE #{primary_key} = ?", value)
   end
 
   # find returns the row with the primary key specified. Otherwise raises an exception.
   def find!(value)
-    find(value) || raise Granite::Querying::NotFound.new("No #{{{@type.name.stringify}}} found where #{@@primary_name} = #{value}")
+    find(value) || raise Granite::Querying::NotFound.new("No #{{{@type.name.stringify}}} found where #{primary_key} = #{value}")
   end
 
   # find_by returns the first row found that matches the given criteria. Otherwise nil.

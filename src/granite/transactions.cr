@@ -87,10 +87,10 @@ module Granite::Transactions
 
     private def __create
       set_timestamps
-      fields = self.class.content_fields.dup
-      params = content_values
-      if value = @{{primary_name}}
-        fields << "{{primary_name}}"
+      fields = self.class.fields.dup
+      params = values
+      if value = primary_value
+        fields << self.class.primary_key
         params << value
       end
       begin
@@ -124,15 +124,15 @@ module Granite::Transactions
     end
 
     private def __update
-      set_timestamps mode: :update
-      fields = self.class.content_fields
-      params = content_values + [@{{primary_name}}]
+    #   set_timestamps mode: :update
+    #   fields = self.class.content_fields
+    #   params = content_values + [@{{primary_name}}]
 
-      begin
-        @@adapter.update @@table_name, @@primary_name, fields, params
-      rescue err
-        raise DB::Error.new(err.message)
-      end
+    #   begin
+    #     @@adapter.update @@table_name, @@primary_name, fields, params
+    #   rescue err
+    #     raise DB::Error.new(err.message)
+    #   end
     end
 
     private def __destroy
@@ -144,11 +144,10 @@ module Granite::Transactions
     # will call the update method, otherwise it will call the create method.
     # This will update the timestamps appropriately.
     disable_granite_docs? def save
-      return false unless valid?
 
       begin
         __before_save
-        if @{{primary_name}} && !new_record?
+        if primary_value && !new_record?
           __before_update
           __update
           __after_update
@@ -161,7 +160,6 @@ module Granite::Transactions
       rescue ex : DB::Error | Granite::Callbacks::Abort
         if message = ex.message
           Granite.settings.logger.error "Save Exception: #{message}"
-          errors << Granite::Error.new(:base, message)
         end
         return false
       end
