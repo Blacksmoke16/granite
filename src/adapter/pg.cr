@@ -33,12 +33,13 @@ class Granite::Adapter::Pg < Granite::Adapter::Base
     end
   end
 
-  def insert(table_name, fields, params, lastval)
+  def insert(table_name, columns, params, lastval)
+    column_names : Array(String) = columns.map(&.name)
     statement = String.build do |stmt|
       stmt << "INSERT INTO #{quote(table_name)} ("
-      stmt << fields.map { |name| "#{quote(name)}" }.join(", ")
+      stmt << columns.map { |c| "#{quote(c.name)}" }.join(", ")
       stmt << ") VALUES ("
-      stmt << fields.map { |name| "$#{fields.index(name).not_nil! + 1}" }.join(", ")
+      stmt << columns.map { |c| "$#{column_names.index(c.name).not_nil! + 1}" }.join(", ")
       stmt << ")"
 
       stmt << " RETURNING #{quote(lastval)}" if lastval

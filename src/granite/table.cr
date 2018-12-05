@@ -9,15 +9,6 @@ macro disable_granite_docs?(stmt)
 end
 
 module Granite::Table
-  property id : Int64? = nil
-
-  macro included
-    macro inherited
-      disable_granite_docs? SETTINGS = {} of Nil => Nil
-      disable_granite_docs? PRIMARY = {name: id, type: Int64, auto: true}
-    end
-  end
-
   # specify the database adapter you will be using for this model.
   # mysql, pg, sqlite, etc.
   macro adapter(name)
@@ -27,5 +18,11 @@ module Granite::Table
   # specify the table name to use otherwise it will use the model's name
   macro table_name(name)
     class_getter table_name : String = {{name.stringify}}
+  end
+
+  module Class
+    def quoted_table_name : String
+      @@adapter.quote table_name
+    end
   end
 end

@@ -1,215 +1,111 @@
 require "./exceptions"
 
 module Granite::Transactions
-  module ClassMethods
-    disable_granite_docs? def clear
-      @@adapter.clear @@table_name
+  # module ClassMethods
+  #   disable_granite_docs? def clear
+  #     @@adapter.clear @@table_name
+  #   end
+
+  #   disable_granite_docs? def create(**args)
+  #     create(args.to_h)
+  #   end
+
+  #   disable_granite_docs? def create(args : Hash(Symbol | String, DB::Any))
+  #     instance = new
+  #     instance.set_attributes(args)
+  #     instance.save
+  #     instance
+  #   end
+
+  #   disable_granite_docs? def create!(**args)
+  #     create!(args.to_h)
+  #   end
+
+  #   disable_granite_docs? def create!(args : Hash(Symbol | String, DB::Any))
+  #     instance = create(args)
+
+  #     if instance.errors.any?
+  #       raise Granite::RecordNotSaved.new(self.name, instance)
+  #     end
+
+  #     instance
+  #   end
+  # end
+
+  # macro __process_transactions
+
+  # disable_granite_docs? def set_timestamps(*, to time = Time.now, mode = :create)
+  #   {% if FIELDS.keys.stringify.includes? "created_at" %}
+  #     if mode == :create
+  #       @created_at = time.to_utc.at_beginning_of_second
+  #     end
+  #   {% end %}
+
+  #   {% if FIELDS.keys.stringify.includes? "updated_at" %}
+  #     @updated_at = time.to_utc.at_beginning_of_second
+  #   {% end %}
+  # end
+
+  private def __create
+    # set_timestamps
+    columns = self.class.columns.dup
+    params = values
+    if primary_value.nil?
+      params.shift
+      columns.shift
     end
+    {% begin %}
+        begin
+          {% pk = @type.instance_vars.find { |ivar| ann = ivar.annotation(Granite::Column); ann && ann[:primary] == true } %}
 
-    disable_granite_docs? def create(**args)
-      create(args.to_h)
-    end
+          {% if pk %}
+            {% pk_ann = pk.annotation(Granite::Column) %}
+            {% primary_name = pk.name %}
+            {% primary_type = pk.type %}
+            {% primary_auto = pk_ann && pk_ann[:auto] ? pk_ann[:auto] : true %}
 
-    disable_granite_docs? def create(args : Hash(Symbol | String, DB::Any))
-      instance = new
-      instance.set_attributes(args)
-      instance.save
-      instance
-    end
-
-    disable_granite_docs? def create!(**args)
-      create!(args.to_h)
-    end
-
-    disable_granite_docs? def create!(args : Hash(Symbol | String, DB::Any))
-      instance = create(args)
-
-      if instance.errors.any?
-        raise Granite::RecordNotSaved.new(self.name, instance)
-      end
-
-      instance
-    end
+            {% if primary_type.union? ? primary_type.union_types.includes?(Int32) : primary_type == Int32 && primary_auto == true %}
+              @{{primary_name}} = @@adapter.insert(@@table_name, columns, params, lastval: "{{primary_name}}").to_i32
+            {% elsif primary_type.union? ? primary_type.union_types.includes?(Int64) : primary_type == Int64 && primary_auto == true %}
+              @{{primary_name}} = @@adapter.insert(@@table_name, columns, params, lastval: "{{primary_name}}")
+            {% elsif primary_type == UUID %}
+              @{{primary_name}} = UUID.random.to_s
+            {% end %}
+          {% else %}
+            {% raise "Failed to define #{@type.name}#save: Primary key must be defined as Int(32|64) for auto increment PKs. @[Granite::Column(primary: true)]\n\nFor natural keys set auto to false: @[Granite::Column(primary: trueauto: false)]" %}
+          {% end %}
+        rescue err : DB::Error
+          raise err
+        rescue err
+          raise DB::Error.new(err.message)
+        end
+    {% end %}
+    @new_record = false
   end
 
-  macro __process_transactions
-    {% primary_name = PRIMARY[:name] %}
-    {% primary_type = PRIMARY[:type] %}
-    {% primary_auto = PRIMARY[:auto] %}
-
-    # The import class method will run a batch INSERT statement for each model in the array
-    # the array must contain only one model class
-    # invalid model records will be skipped
-    disable_granite_docs? def self.import(model_array : Array(self) | Granite::Collection(self), batch_size : Int32 = model_array.size)
-      begin
-        fields_duplicate = fields.dup
-        model_array.each_slice(batch_size, true) do |slice|
-          @@adapter.import(table_name, primary_name, primary_auto, fields_duplicate, slice)
-        end
-      rescue err
-        raise DB::Error.new(err.message)
+  # The save method will check to see if the primary exists yet. If it does it
+  # will call the update method, otherwise it will call the create method.
+  # This will update the timestamps appropriately.
+  disable_granite_docs? def save
+    begin
+      # __before_save
+      if primary_value && !new_record?
+        # __before_update
+        # __update
+        # __after_update
+      else
+        # __before_create
+        __create
+        # __after_create
       end
-    end
-
-    disable_granite_docs? def self.import(model_array : Array(self) | Granite::Collection(self), update_on_duplicate : Bool, columns : Array(String), batch_size : Int32 = model_array.size)
-      begin
-        fields_duplicate = fields.dup
-        model_array.each_slice(batch_size, true) do |slice|
-          @@adapter.import(table_name, primary_name, primary_auto, fields_duplicate, slice, update_on_duplicate: update_on_duplicate, columns: columns)
-        end
-      rescue err
-        raise DB::Error.new(err.message)
+      # __after_save
+    rescue ex : DB::Error | Granite::Callbacks::Abort
+      if message = ex.message
+        Granite.settings.logger.error "Save Exception: #{message}"
       end
+      return false
     end
-
-    disable_granite_docs? def self.import(model_array : Array(self) | Granite::Collection(self), ignore_on_duplicate : Bool, batch_size : Int32 = model_array.size)
-      begin
-        fields_duplicate = fields.dup
-        model_array.each_slice(batch_size, true) do |slice|
-          @@adapter.import(table_name, primary_name, primary_auto, fields_duplicate, slice, ignore_on_duplicate: ignore_on_duplicate)
-        end
-      rescue err
-        raise DB::Error.new(err.message)
-      end
-    end
-
-    disable_granite_docs? def set_timestamps(*, to time = Time.now, mode = :create)
-      {% if FIELDS.keys.stringify.includes? "created_at" %}
-        if mode == :create
-          @created_at = time.to_utc.at_beginning_of_second
-        end
-      {% end %}
-
-      {% if FIELDS.keys.stringify.includes? "updated_at" %}
-        @updated_at = time.to_utc.at_beginning_of_second
-      {% end %}
-    end
-
-    private def __create
-      set_timestamps
-      fields = self.class.fields.dup
-      params = values
-      if value = primary_value
-        fields << self.class.primary_key
-        params << value
-      end
-      begin
-        {% if primary_type.id == "Int32" && primary_auto == true %}
-          @{{primary_name}} = @@adapter.insert(@@table_name, fields, params, lastval: "{{primary_name}}").to_i32
-        {% elsif primary_type.id == "Int64" && primary_auto == true %}
-          @{{primary_name}} = @@adapter.insert(@@table_name, fields, params, lastval: "{{primary_name}}")
-        {% elsif primary_auto == true %}
-          {% raise "Failed to define #{@type.name}#save: Primary key must be Int(32|64), or set `auto: false` for natural keys.\n\n  primary #{primary_name} : #{primary_type}, auto: false\n" %}
-        {% else %}
-          {% if primary_auto == :uuid %}
-            _uuid = UUID.random.to_s
-            @{{primary_name}} = _uuid
-            params << _uuid
-            fields << "{{primary_name}}"
-          {% end %}
-          if @{{primary_name}}
-            @@adapter.insert(@@table_name, fields, params, lastval: nil)
-          else
-            message = "Primary key('{{primary_name}}') cannot be null"
-            errors << Granite::Error.new("{{primary_name}}", message)
-            raise DB::Error.new
-          end
-        {% end %}
-      rescue err : DB::Error
-        raise err
-      rescue err
-        raise DB::Error.new(err.message)
-      end
-      @new_record = false
-    end
-
-    private def __update
-    #   set_timestamps mode: :update
-    #   fields = self.class.content_fields
-    #   params = content_values + [@{{primary_name}}]
-
-    #   begin
-    #     @@adapter.update @@table_name, @@primary_name, fields, params
-    #   rescue err
-    #     raise DB::Error.new(err.message)
-    #   end
-    end
-
-    private def __destroy
-      @@adapter.delete(@@table_name, @@primary_name, @{{primary_name}})
-      @destroyed = true
-    end
-
-    # The save method will check to see if the primary exists yet. If it does it
-    # will call the update method, otherwise it will call the create method.
-    # This will update the timestamps appropriately.
-    disable_granite_docs? def save
-
-      begin
-        __before_save
-        if primary_value && !new_record?
-          __before_update
-          __update
-          __after_update
-        else
-          __before_create
-          __create
-          __after_create
-        end
-        __after_save
-      rescue ex : DB::Error | Granite::Callbacks::Abort
-        if message = ex.message
-          Granite.settings.logger.error "Save Exception: #{message}"
-        end
-        return false
-      end
-      true
-    end
-
-
-    disable_granite_docs? def save!
-      save || raise Granite::RecordNotSaved.new(self.class.name, self)
-    end
-
-    disable_granite_docs? def update(**args)
-      update(args.to_h)
-    end
-
-    disable_granite_docs? def update(args : Hash(Symbol | String, DB::Any))
-      set_attributes(args)
-
-      save
-    end
-
-    disable_granite_docs? def update!(**args)
-      update!(args.to_h)
-    end
-
-    disable_granite_docs? def update!(args : Hash(Symbol | String, DB::Any))
-      set_attributes(args)
-
-      save!
-    end
-
-    # Destroy will remove this from the database.
-    disable_granite_docs? def destroy
-      begin
-        __before_destroy
-        __destroy
-        __after_destroy
-      rescue ex : DB::Error | Granite::Callbacks::Abort
-        if message = ex.message
-          Granite.settings.logger.error "Destroy Exception: #{message}"
-          errors << Granite::Error.new(:base, message)
-        end
-        return false
-      end
-      true
-    end
-
-    disable_granite_docs? def destroy!
-      destroy || raise Granite::RecordNotDestroyed.new(self.class.name, self)
-    end
+    true
   end
 
   # Returns true if this object hasn't been saved yet.

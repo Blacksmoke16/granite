@@ -36,9 +36,6 @@ module Granite::Migrator
   end
 
   macro __process_migrator
-    {% primary_name = PRIMARY[:name] %}
-    {% primary_type = PRIMARY[:type] %}
-    {% primary_auto = PRIMARY[:auto] %}
     {% klass = @type.name %}
     {% adapter = "#{klass}.adapter".id %}
 
@@ -52,35 +49,27 @@ module Granite::Migrator
           {{adapter}}.class.schema_type?(key) || raise "Migrator(#{ {{adapter}}.class.name }) doesn't support '#{key}' yet."
         }
 
+
         stmt = String.build do |s|
-          s.puts "CREATE TABLE #{ @quoted_table_name }("
+          s << "CREATE TABLE #{ @quoted_table_name }("
 
-          # primary key
-          k = {{adapter}}.quote("{{primary_name}}")
-          v =
-            {% if primary_auto == :uuid %}
-              resolve.call("UUID")
-            {% elsif primary_auto %}
-              resolve.call("AUTO_{{primary_type.id}}")
-            {% else %}
-              resolve.call("{{primary_type.id}}")
-            {% end %}
-          s.print "#{k} #{v} PRIMARY KEY"
+          {{@type}}.columns.each do |c|
+            k = {{adapter}}.quote(c.name)
+            pp c.name
+            v = if %(created_at updated_at).includes?(c.name)
+                  resolve.call(c.name)
+                elsif c.auto
+                  resolve.call("AUTO_#{c.type}")
+                else
+                 resolve.call(c.type.to_s)
+                 end
+            s << %(#{k} #{v} #{c.primary == true ? "PRIMARY KEY " : ""}#{c.nilable && !c.primary ? "NULL" : "NOT NULL"})
+            s << ','
+          end
 
-          # content fields
-          {% for name, options in CONTENT_FIELDS %}
-            s.puts ","
-            k = {{adapter}}.quote("{{name}}")
-            v =
-              {% if name.id == "created_at" || name.id == "updated_at" %}
-                resolve.call("{{name}}")
-              {% else %}
-                resolve.call("{{options[:type]}}")
-              {% end %}
-            s.puts "#{k} #{v}"
-          {% end %}
+          s.chomp! 44_u8
 
-          s.puts ") #{@table_options};"
+          s << ")#{@table_options};"
         end
 
         {{klass}}.exec stmt

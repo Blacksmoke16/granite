@@ -37,7 +37,7 @@ abstract class Granite::Adapter::Base
     clause = ensure_clause_template(clause)
     statement = query.custom ? "#{query.custom} #{clause}" : String.build do |stmt|
       stmt << "SELECT "
-      stmt << query.fields.map { |name| "#{quote(query.table_name)}.#{quote(name)}" }.join(", ")
+      stmt << query.columns.map { |c| "#{quote(query.table_name)}.#{quote(c.name)}" }.join(", ")
       stmt << " FROM #{quote(query.table_name)} #{clause}"
     end
 
@@ -50,7 +50,7 @@ abstract class Granite::Adapter::Base
     end
   end
 
-  def ensure_clause_template(clause)
+  def ensure_clause_template(clause) : String
     clause
   end
 

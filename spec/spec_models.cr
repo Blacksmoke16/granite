@@ -12,8 +12,7 @@ require "uuid"
     adapter {{ adapter_literal }}
     table_name parents
 
-    @[Granite::Column]
-    @[Granite::PrimaryKey]
+    @[Granite::Column(primary: true)]
     property id : Int64?
 
     @[Granite::Column]

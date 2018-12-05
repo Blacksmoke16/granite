@@ -8,9 +8,9 @@ module Granite::Select
 
   struct Container
     property custom : String?
-    getter table_name, fields
+    getter table_name, columns
 
-    def initialize(@custom = nil, @table_name = "", @fields = [] of String)
+    def initialize(@custom = nil, @table_name = "", @columns = [] of Granite::Columns::Class::ColumnBase)
     end
   end
 
@@ -23,6 +23,6 @@ module Granite::Select
   end
 
   macro __process_select
-    @@select = Container.new(table_name: @@table_name, fields: fields)
+    @@select = Container.new(table_name: @@table_name, columns: columns)
   end
 end
