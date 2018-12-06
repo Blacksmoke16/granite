@@ -27,25 +27,9 @@ class Granite::Base
   extend Columns::Class
   extend Table::Class
 
-  disable_granite_docs? def set_attributes(result : DB::ResultSet)
-    # Loading from DB means existing records.
-    @new_record = false
-    {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
-      self.{{column.id}} = result.read({{column.type}})
-    {% end %}
-    self
-  end
-
-  disable_granite_docs? def set_attributes(hash : Hash(String | Symbol, Granite::Columns::Type))
-    # Loading from DB means existing records.
-    @new_record = false
-    self
-  end
-
   extend Querying
   extend Query::BuilderMethods
-
-  # extend Transactions::ClassMethods
+  extend Transactions::ClassMethods
 
   macro inherited
     include JSON::Serializable

@@ -3,7 +3,8 @@ require "mysql"
 
 # Mysql implementation of the Adapter
 class Granite::Adapter::Mysql < Granite::Adapter::Base
-  QUOTING_CHAR = '`'
+  QUOTING_CHAR       = '`'
+  VALUE_QUOTING_CHAR = '\''
 
   module Schema
     TYPES = {
@@ -15,23 +16,12 @@ class Granite::Adapter::Mysql < Granite::Adapter::Base
     }
   end
 
-  # Using TRUNCATE instead of DELETE so the id column resets to 0
-  def clear(table_name)
-    statement = "TRUNCATE #{quote(table_name)}"
-
-    log statement
-
-    open do |db|
-      db.exec statement
-    end
-  end
-
-  def insert(table_name, fields, params, lastval)
+  def insert(table_name : String, columns : Array(Granite::Columns::Class::ColumnBase), params, lastval) : Int64
     statement = String.build do |stmt|
       stmt << "INSERT INTO #{quote(table_name)} ("
-      stmt << fields.map { |name| "#{quote(name)}" }.join(", ")
+      stmt << columns.map { |c| "#{quote(c.name)}" }.join(", ")
       stmt << ") VALUES ("
-      stmt << fields.map { |_name| "?" }.join(", ")
+      stmt << ("?,"*columns.size).chomp(',')
       stmt << ")"
     end
 
@@ -115,5 +105,10 @@ class Granite::Adapter::Mysql < Granite::Adapter::Base
     open do |db|
       db.exec statement, value
     end
+  end
+
+  private def ensure_clause_template(clause : String) : String
+    clause = clause.gsub(/\$\d+/, '?') if clause =~ /\$\d+/
+    clause
   end
 end

@@ -3,7 +3,8 @@ require "sqlite3"
 
 # Sqlite implementation of the Adapter
 class Granite::Adapter::Sqlite < Granite::Adapter::Base
-  QUOTING_CHAR = '"'
+  QUOTING_CHAR       = '"'
+  VALUE_QUOTING_CHAR = '\''
 
   module Schema
     TYPES = {
@@ -18,7 +19,7 @@ class Granite::Adapter::Sqlite < Granite::Adapter::Base
   end
 
   # remove all rows from a table and reset the counter on the id.
-  def clear(table_name)
+  def clear(table_name : String) : DB::ExecResult
     statement = "DELETE FROM #{quote(table_name)}"
 
     log statement
@@ -28,12 +29,12 @@ class Granite::Adapter::Sqlite < Granite::Adapter::Base
     end
   end
 
-  def insert(table_name, fields, params, lastval)
+  def insert(table_name : String, columns : Array(Granite::Columns::Class::ColumnBase), params, lastval) : Int64
     statement = String.build do |stmt|
       stmt << "INSERT INTO #{quote(table_name)} ("
-      stmt << fields.map { |name| "#{quote(name)}" }.join(", ")
+      stmt << columns.map { |c| "#{quote(c.name)}" }.join(", ")
       stmt << ") VALUES ("
-      stmt << fields.map { |_name| "?" }.join(", ")
+      stmt << ("?,"*columns.size).chomp(',')
       stmt << ")"
     end
 

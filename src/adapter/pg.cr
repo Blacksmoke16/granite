@@ -3,7 +3,8 @@ require "pg"
 
 # PostgreSQL implementation of the Adapter
 class Granite::Adapter::Pg < Granite::Adapter::Base
-  QUOTING_CHAR = '"'
+  QUOTING_CHAR       = '"'
+  VALUE_QUOTING_CHAR = '\''
 
   module Schema
     TYPES = {
@@ -22,18 +23,7 @@ class Granite::Adapter::Pg < Granite::Adapter::Base
     }
   end
 
-  # remove all rows from a table and reset the counter on the id.
-  def clear(table_name)
-    statement = "DELETE FROM #{quote(table_name)}"
-
-    log statement
-
-    open do |db|
-      db.exec statement
-    end
-  end
-
-  def insert(table_name, columns, params, lastval)
+  def insert(table_name : String, columns : Array(Granite::Columns::Class::ColumnBase), params, lastval) : Int64
     column_names : Array(String) = columns.map(&.name)
     statement = String.build do |stmt|
       stmt << "INSERT INTO #{quote(table_name)} ("
@@ -102,11 +92,12 @@ class Granite::Adapter::Pg < Granite::Adapter::Base
   end
 
   # This will update a row in the database.
-  def update(table_name, primary_name, fields, params)
+  def update(table_name : String, primary_name : String, columns : Array(ColmunBase), params)
+    column_names : Array(String) = columns.map(&.name)
     statement = String.build do |stmt|
       stmt << "UPDATE #{quote(table_name)} SET "
-      stmt << fields.map { |name| "#{quote(name)}=$#{fields.index(name).not_nil! + 1}" }.join(", ")
-      stmt << " WHERE #{quote(primary_name)}=$#{fields.size + 1}"
+      stmt << columns.map { |c| "#{quote(c.name)}=$#{column_names.index(c.name).not_nil! + 1}" }.join(", ")
+      stmt << " WHERE #{quote(primary_name)}=$#{columns.size + 1}"
     end
 
     log statement, params
@@ -117,7 +108,7 @@ class Granite::Adapter::Pg < Granite::Adapter::Base
   end
 
   # This will delete a row from the database.
-  def delete(table_name, primary_name, value)
+  def delete(table_name : String, primary_name : String, value)
     statement = "DELETE FROM #{quote(table_name)} WHERE #{quote(primary_name)}=$1"
 
     log statement, value
@@ -127,12 +118,12 @@ class Granite::Adapter::Pg < Granite::Adapter::Base
     end
   end
 
-  def ensure_clause_template(clause)
-    if clause.includes?("?")
-      num_subs = clause.count("?")
+  private def ensure_clause_template(clause : String) : String
+    if clause.includes?('?')
+      num_subs = clause.count('?')
 
       num_subs.times do |i|
-        clause = clause.sub("?", "$#{i + 1}")
+        clause = clause.sub('?', "$#{i + 1}")
       end
     end
 

@@ -26,9 +26,6 @@ abstract class Granite::Adapter::Base
     Granite.settings.logger.info "#{query}: #{params}"
   end
 
-  # remove all rows from a table and reset the counter on the id.
-  abstract def clear(table_name)
-
   # select performs a query against a table.  The query object containes table_name,
   # fields (configured using the sql_mapping directive in your model), and an optional
   # raw query string.  The clause and params is the query and params that is passed
@@ -50,21 +47,32 @@ abstract class Granite::Adapter::Base
     end
   end
 
-  def ensure_clause_template(clause) : String
+  def ensure_clause_template(clause : String) : String
     clause
   end
 
+  # remove all rows from a table and reset the counter on the id.
+  def clear(table_name : String) : DB::ExecResult
+    statement = "TRUNCATE TABLE #{quote(table_name)}"
+
+    log statement
+
+    open do |db|
+      db.exec statement
+    end
+  end
+
   # This will insert a row in the database and return the id generated.
-  abstract def insert(table_name, fields, params, lastval) : Int64
+  abstract def insert(table_name : String, columns : Array(Granite::Columns::Class::ColumnBase), params, lastval) : Int64
 
   # This will insert an array of models as one insert statement
-  abstract def import(table_name : String, primary_name : String, auto : String, fields, model_array, **options)
+  abstract def import(table_name : String, primary_name : String, auto : String, columns : Array(ColumnBase), model_array, **options)
 
   # This will update a row in the database.
-  abstract def update(table_name, primary_name, fields, params)
+  abstract def update(table_name : String, primary_name : String, columns : Array(ColumnBase), params)
 
   # This will delete a row from the database.
-  abstract def delete(table_name, primary_name, value)
+  abstract def delete(table_name : String, primary_name : String, value)
 
   module Schema
     TYPES = {
@@ -84,6 +92,32 @@ abstract class Granite::Adapter::Base
     def quote(name : String) : String
       char = QUOTING_CHAR
       char + name.gsub(char, "#{char}#{char}") + char
+    end
+
+    # quotes a value of a given type
+    def quote_value(value : String?) : String
+      char = VALUE_QUOTING_CHAR
+      "#{char}#{value}#{char}"
+    end
+
+    # quotes a value of a given type
+    def quote_value(value : Number? | Bool?)
+      value
+    end
+
+    # quotes a value of a given type
+    def quote_value(value : Array) : String
+      String.build do |str|
+        str << VALUE_QUOTING_CHAR
+        str << '{'
+        value.each do |v|
+          str << v
+          str << ','
+        end
+        str.chomp! 44_u8
+        str << '}'
+        str << VALUE_QUOTING_CHAR
+      end
     end
 
     # converts the crystal class to database type of this adapter

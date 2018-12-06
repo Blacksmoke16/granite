@@ -55,7 +55,6 @@ module Granite::Migrator
 
           {{@type}}.columns.each do |c|
             k = {{adapter}}.quote(c.name)
-            pp c.name
             v = if %(created_at updated_at).includes?(c.name)
                   resolve.call(c.name)
                 elsif c.auto
@@ -63,7 +62,10 @@ module Granite::Migrator
                 else
                  resolve.call(c.type.to_s)
                  end
-            s << %(#{k} #{v} #{c.primary == true ? "PRIMARY KEY " : ""}#{c.nilable && !c.primary ? "NULL" : "NOT NULL"})
+            s << "#{k} #{v}"
+            s << " PRIMARY KEY" if c.primary == true
+            s << (c.nilable && !c.primary ? " NULL" : " NOT NULL")
+            s << " DEFAULT #{{{adapter}}.quote_value(c.default)}" unless c.default.nil?
             s << ','
           end
 
