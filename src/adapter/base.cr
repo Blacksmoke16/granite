@@ -47,10 +47,6 @@ abstract class Granite::Adapter::Base
     end
   end
 
-  def ensure_clause_template(clause : String) : String
-    clause
-  end
-
   # remove all rows from a table and reset the counter on the id.
   def clear(table_name : String) : DB::ExecResult
     statement = "TRUNCATE TABLE #{quote(table_name)}"
@@ -62,8 +58,11 @@ abstract class Granite::Adapter::Base
     end
   end
 
+  # Place holder conversion
+  abstract def ensure_clause_template(clause : String) : String
+
   # This will insert a row in the database and return the id generated.
-  abstract def insert(table_name : String, columns : Array(Granite::Columns::Class::ColumnBase), params, lastval) : Int64
+  abstract def insert(table_name : String, columns : Array(ColumnBase), params, lastval) : Int64
 
   # This will insert an array of models as one insert statement
   abstract def import(table_name : String, primary_name : String, auto : String, columns : Array(ColumnBase), model_array, **options)
@@ -95,7 +94,7 @@ abstract class Granite::Adapter::Base
     end
 
     # quotes a value of a given type
-    def quote_value(value : String?) : String
+    def quote_value(value : String? | Time?) : String
       char = VALUE_QUOTING_CHAR
       "#{char}#{value}#{char}"
     end

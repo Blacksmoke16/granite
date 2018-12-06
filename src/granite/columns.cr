@@ -1,7 +1,7 @@
 require "json"
 
 module Granite::Columns
-  module Class
+  module ClassMethods
     abstract struct ColumnBase; end
 
     private struct ColumnInfo(T) < ColumnBase

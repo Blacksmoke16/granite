@@ -69,13 +69,17 @@ require "uuid"
   #   belongs_to :klass
   # end
 
-  # class School < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   primary custom_id : Int64
-  #   field name : String
+  class School < Granite::Base
+    adapter {{ adapter_literal }}
 
-  #   table_name schools
-  # end
+    table_name schools
+
+    @[Granite::Column(primary: true)]
+    property custom_id : Int64?
+
+    @[Granite::Column]
+    property name : String
+  end
 
   # class User < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -126,25 +130,45 @@ require "uuid"
   #   table_name profiles
   # end
 
-  # class Nation::County < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   primary id : Int64
-  #   table_name nation_counties
+  class Nation::County < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name nation_counties
 
-  #   field name : String
-  # end
+    @[Granite::Column(primary: true)]
+    property id : Int64?
 
-  # class Review < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name reviews
-  #   field name : String
-  #   field downvotes : Int32
-  #   field upvotes : Int64
-  #   field sentiment : Float32
-  #   field interest : Float64
-  #   field published : Bool
-  #   field created_at : Time
-  # end
+    @[Granite::Column]
+    property name : String
+  end
+
+  class Review < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name reviews
+
+    @[Granite::Column(primary: true)]
+    property id : Int64?
+
+    @[Granite::Column]
+    property name : String
+
+    @[Granite::Column]
+    property downvotes : Int32?
+
+    @[Granite::Column]
+    property upvotes : Int64?
+
+    @[Granite::Column]
+    property sentiment : Float32?
+
+    @[Granite::Column]
+    property interest : Float64?
+
+    @[Granite::Column]
+    property published : Bool
+
+    # @[Granite::Column]
+    property created_at : Time?
+  end
 
   # class Empty < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -152,11 +176,16 @@ require "uuid"
   #   primary id : Int64
   # end
 
-  # class ReservedWord < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name "select"
-  #   field all : String
-  # end
+  class ReservedWord < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name "select"
+
+    @[Granite::Column(primary: true)]
+    property id : Int64?
+
+    @[Granite::Column]
+    property all : String
+  end
 
   # class Callback < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -382,18 +411,20 @@ require "uuid"
   #   field created_at : Time, yaml_options: {key: "posted"}
   # end
 
+  private def setup_teardown
+
   Parent.migrator.drop_and_create
   # Teacher.migrator.drop_and_create
   # Student.migrator.drop_and_create
   # Klass.migrator.drop_and_create
   # Enrollment.migrator.drop_and_create
-  # School.migrator.drop_and_create
+  School.migrator.drop_and_create
   # User.migrator.drop_and_create
   # Profile.migrator.drop_and_create
-  # Nation::County.migrator.drop_and_create
-  # Review.migrator.drop_and_create
+  Nation::County.migrator.drop_and_create
+  Review.migrator.drop_and_create
   # Empty.migrator.drop_and_create
-  # ReservedWord.migrator.drop_and_create
+  ReservedWord.migrator.drop_and_create
   # Callback.migrator.drop_and_create
   # CallbackWithAbort.migrator.drop_and_create
   # Kvs.migrator.drop_and_create
@@ -417,4 +448,5 @@ require "uuid"
   # Character.migrator.drop_and_create
   # Courier.migrator.drop_and_create
   # CourierService.migrator.drop_and_create
+end
 {% end %}

@@ -29,7 +29,7 @@ class Granite::Adapter::Sqlite < Granite::Adapter::Base
     end
   end
 
-  def insert(table_name : String, columns : Array(Granite::Columns::Class::ColumnBase), params, lastval) : Int64
+  def insert(table_name : String, columns : Array(Granite::Columns::ClassMethods::ColumnBase), params, lastval) : Int64
     statement = String.build do |stmt|
       stmt << "INSERT INTO #{quote(table_name)} ("
       stmt << columns.map { |c| "#{quote(c.name)}" }.join(", ")
@@ -109,5 +109,10 @@ class Granite::Adapter::Sqlite < Granite::Adapter::Base
     open do |db|
       db.exec statement, value
     end
+  end
+
+  private def ensure_clause_template(clause : String) : String
+    clause = clause.gsub(/\$\d+/, '?') if clause =~ /\$\d+/
+    clause
   end
 end

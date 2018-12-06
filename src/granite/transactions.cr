@@ -6,30 +6,30 @@ module Granite::Transactions
       @@adapter.clear @@table_name
     end
 
-    #   disable_granite_docs? def create(**args)
-    #     create(args.to_h)
-    #   end
+    disable_granite_docs? def create(**args) : self
+      create(args.to_h)
+    end
 
-    #   disable_granite_docs? def create(args : Hash(Symbol | String, DB::Any))
-    #     instance = new
-    #     instance.set_attributes(args)
-    #     instance.save
-    #     instance
-    #   end
+    disable_granite_docs? def create(args : Hash(Symbol | String, DB::Any)) : self
+      instance = new
+      instance.set_attributes(args)
+      instance.save
+      instance
+    end
 
-    #   disable_granite_docs? def create!(**args)
-    #     create!(args.to_h)
-    #   end
+    disable_granite_docs? def create!(**args) : self
+      create!(args.to_h)
+    end
 
-    #   disable_granite_docs? def create!(args : Hash(Symbol | String, DB::Any))
-    #     instance = create(args)
+    disable_granite_docs? def create!(args : Hash(Symbol | String, DB::Any)) : self
+      instance = create(args)
 
-    #     if instance.errors.any?
-    #       raise Granite::RecordNotSaved.new(self.name, instance)
-    #     end
+      if instance.errors.any?
+        raise Granite::RecordNotSaved.new(self.name, instance)
+      end
 
-    #     instance
-    #   end
+      instance
+    end
   end
 
   # macro __process_transactions

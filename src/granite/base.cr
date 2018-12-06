@@ -24,12 +24,12 @@ class Granite::Base
   include Columns
   include Table
 
-  extend Columns::Class
-  extend Table::Class
+  extend Columns::ClassMethods
+  extend Table::ClassMethods
+  extend Transactions::ClassMethods
 
   extend Querying
   extend Query::BuilderMethods
-  extend Transactions::ClassMethods
 
   macro inherited
     include JSON::Serializable

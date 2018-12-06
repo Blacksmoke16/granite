@@ -10,7 +10,7 @@ module Granite::Select
     property custom : String?
     getter table_name, columns
 
-    def initialize(@custom = nil, @table_name = "", @columns = [] of Granite::Columns::Class::ColumnBase)
+    def initialize(@custom = nil, @table_name = "", @columns = [] of Granite::Columns::ClassMethods::ColumnBase)
     end
   end
 

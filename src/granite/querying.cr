@@ -31,40 +31,40 @@ module Granite::Querying
   # that you are using so you are not restricted or dummied down to support a
   # DSL.
   # Lazy load prevent running unnecessary queries from unused variables.
-  def all(clause = "", params = [] of DB::Any)
+  def all(clause = "", params = [] of DB::Any) : Collection(self)
     Collection(self).new(->{ raw_all(clause, params) })
   end
 
   # First adds a `LIMIT 1` clause to the query and returns the first result
-  def first(clause = "", params = [] of DB::Any)
+  def first(clause = "", params = [] of DB::Any) : self?
     all([clause.strip, "LIMIT 1"].join(" "), params).first?
   end
 
-  def first!(clause = "", params = [] of DB::Any)
+  def first!(clause = "", params = [] of DB::Any) : self
     first(clause, params) || raise NotFound.new("No #{{{@type.name.stringify}}} found with first(#{clause})")
   end
 
   # find returns the row with the primary key specified. Otherwise nil.
-  def find(value)
-    first("WHERE #{primary_key} = ?", value)
+  def find(value) : self?
+    first("WHERE #{primary_key.name} = ?", value)
   end
 
   # find returns the row with the primary key specified. Otherwise raises an exception.
-  def find!(value)
-    find(value) || raise Granite::Querying::NotFound.new("No #{{{@type.name.stringify}}} found where #{primary_key} = #{value}")
+  def find!(value) : self
+    find(value) || raise Granite::Querying::NotFound.new("No #{{{@type.name.stringify}}} found where #{primary_key.name} = #{value}")
   end
 
   # find_by returns the first row found that matches the given criteria. Otherwise nil.
-  def find_by(**args)
+  def find_by(**args) : self?
     first("WHERE #{args.map { |name| "#{quote(@@table_name)}.#{quote(name.to_s)} = ?" }.join(" AND ")}", args.values.to_a)
   end
 
   # find_by returns the first row found that matches the given criteria. Otherwise raises an exception.
-  def find_by!(**args)
+  def find_by!(**args) : self
     find_by(**args) || raise NotFound.new("No #{{{@type.name.stringify}}} found where #{args.map { |k, v| "#{k} = #{v}" }.join(" and ")}")
   end
 
-  def find_each(clause = "", params = [] of DB::Any, batch_size limit = 100, offset = 0)
+  def find_each(clause : String = "", params = [] of DB::Any, batch_size limit : Int32 = 100, offset : Int32 = 0)
     find_in_batches(clause, params, batch_size: limit, offset: offset) do |batch|
       batch.each do |record|
         yield record
@@ -72,10 +72,8 @@ module Granite::Querying
     end
   end
 
-  def find_in_batches(clause = "", params = [] of DB::Any, batch_size limit = 100, offset = 0)
-    if limit < 1
-      raise ArgumentError.new("batch_size must be >= 1")
-    end
+  def find_in_batches(clause : String = "", params = [] of DB::Any, batch_size limit : Int32 = 100, offset : Int32 = 0)
+    raise ArgumentError.new("batch_size must be >= 1") if limit < 1
 
     loop do
       results = all "#{clause} LIMIT ? OFFSET ?", params + [limit, offset]

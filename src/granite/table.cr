@@ -9,6 +9,16 @@ macro disable_granite_docs?(stmt)
 end
 
 module Granite::Table
+  module ClassMethods
+    disable_granite_docs? def quoted_table_name : String
+      @@adapter.quote table_name
+    end
+
+    disable_granite_docs? def quote(name : String) : String
+      @@adapter.quote name
+    end
+  end
+
   # specify the database adapter you will be using for this model.
   # mysql, pg, sqlite, etc.
   macro adapter(name)
@@ -29,7 +39,7 @@ module Granite::Table
     self
   end
 
-  disable_granite_docs? def set_attributes(hash : Hash(Symbol, DB::Any))
+  disable_granite_docs? def set_attributes(hash : Hash(Symbol, DB::Any)) : self
     {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
       if val = hash[{{column.symbolize}}]?
         if val.is_a?({{column.type}})
@@ -42,7 +52,7 @@ module Granite::Table
     self
   end
 
-  disable_granite_docs? def set_attributes(hash : Hash(String, DB::Any))
+  disable_granite_docs? def set_attributes(hash : Hash(String, DB::Any)) : self
     {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
       if val = hash[{{column.stringify}}]?
         if val.is_a?({{column.type}})
@@ -53,11 +63,5 @@ module Granite::Table
       end
     {% end %}
     self
-  end
-
-  module Class
-    disable_granite_docs? def quoted_table_name : String
-      @@adapter.quote table_name
-    end
   end
 end
