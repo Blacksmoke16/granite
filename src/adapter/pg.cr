@@ -10,7 +10,9 @@ class Granite::Adapter::Pg < Granite::Adapter::Base
     TYPES = {
       "AUTO_Int32"     => "SERIAL",
       "AUTO_Int64"     => "BIGSERIAL",
+      "AUTO_UUID"      => "UUID",
       "UUID"           => "UUID",
+      "JSON::Any"      => "JSONB",
       "created_at"     => "TIMESTAMP",
       "updated_at"     => "TIMESTAMP",
       "Array(String)"  => "TEXT[]",

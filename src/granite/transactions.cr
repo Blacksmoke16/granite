@@ -68,8 +68,12 @@ module Granite::Transactions
               @{{primary_name}} = @@adapter.insert(@@table_name, columns, params, lastval: "{{primary_name}}").to_i32
             {% elsif primary_type.union? ? primary_type.union_types.includes?(Int64) : primary_type == Int64 && primary_auto == true %}
               @{{primary_name}} = @@adapter.insert(@@table_name, columns, params, lastval: "{{primary_name}}")
-            {% elsif primary_type == UUID %}
-              @{{primary_name}} = UUID.random.to_s
+            {% elsif primary_type.union? ? primary_type.union_types.includes?(UUID) : primary_type == UUID && primary_auto == true %}
+              _uuid = UUID.random
+              @{{primary_name}} = _uuid
+              params.unshift _uuid
+              columns.unshift self.class.primary_key
+              @@adapter.insert(@@table_name, columns, params, lastval: nil)
             {% end %}
           {% else %}
             {% raise "Failed to define #{@type.name}#save: Primary key must be defined as Int(32|64) for auto increment PKs. @[Granite::Column(primary: true)]\n\nFor natural keys set auto to false: @[Granite::Column(primary: trueauto: false)]" %}

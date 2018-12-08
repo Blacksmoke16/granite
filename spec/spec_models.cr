@@ -18,11 +18,11 @@ require "uuid"
     @[Granite::Column]
     property name : String
 
-    # @[Granite::Column]
-    property created_at : Time?
+    @[Granite::Column]
+    property created_at : Time
 
-    # @[Granite::Column]
-    property updated_at : Time?
+    @[Granite::Column]
+    property updated_at : Time
 
     # has_many :students, class_name: Student
   end
@@ -170,11 +170,13 @@ require "uuid"
     property created_at : Time?
   end
 
-  # class Empty < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name empties
-  #   primary id : Int64
-  # end
+  class Empty < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name empties
+
+    @[Granite::Column(primary: true)]
+    property id : Int64?
+  end
 
   class ReservedWord < Granite::Base
     adapter {{ adapter_literal }}
@@ -220,12 +222,16 @@ require "uuid"
   #   {% end %}
   # end
 
-  # class Kvs < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name kvs
-  #   primary k : String, auto: false
-  #   field v : String
-  # end
+  class Kvs < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name kvs
+
+    @[Granite::Column(primary: true, auto: false)]
+    property k : String?
+
+    @[Granite::Column]
+    property v : String
+  end
 
   # class Person < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -384,12 +390,13 @@ require "uuid"
   #   ArrayModel.migrator.drop_and_create
   # {% end %}
 
-  # class UUIDModel < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name uuids
+  class UUIDModel < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name uuids
 
-  #   primary uuid : String, auto: :uuid
-  # end
+    @[Granite::Column(primary: true]
+    property uuid : UUID?
+  end
 
   # class TodoJsonOptions < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -411,8 +418,6 @@ require "uuid"
   #   field created_at : Time, yaml_options: {key: "posted"}
   # end
 
-  private def setup_teardown
-
   Parent.migrator.drop_and_create
   # Teacher.migrator.drop_and_create
   # Student.migrator.drop_and_create
@@ -423,11 +428,11 @@ require "uuid"
   # Profile.migrator.drop_and_create
   Nation::County.migrator.drop_and_create
   Review.migrator.drop_and_create
-  # Empty.migrator.drop_and_create
+  Empty.migrator.drop_and_create
   ReservedWord.migrator.drop_and_create
   # Callback.migrator.drop_and_create
   # CallbackWithAbort.migrator.drop_and_create
-  # Kvs.migrator.drop_and_create
+  Kvs.migrator.drop_and_create
   # Person.migrator.drop_and_create
   # Company.migrator.drop_and_create
   # Book.migrator.drop_and_create
@@ -442,11 +447,10 @@ require "uuid"
   # AfterInit.migrator.drop_and_create
   # SongThread.migrator.drop_and_create
   # CustomSongThread.migrator.drop_and_create
-  # UUIDModel.migrator.drop_and_create
+  UUIDModel.migrator.drop_and_create
   # TodoJsonOptions.migrator.drop_and_create
   # TodoYamlOptions.migrator.drop_and_create
   # Character.migrator.drop_and_create
   # Courier.migrator.drop_and_create
   # CourierService.migrator.drop_and_create
-end
 {% end %}

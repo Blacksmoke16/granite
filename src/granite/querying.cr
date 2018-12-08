@@ -2,22 +2,18 @@ module Granite::Querying
   class NotFound < Exception
   end
 
-  macro extended
-    macro __process_querying
-      # Create the from_sql method
-      disable_granite_docs? def self.from_sql(result)
-        model = \{{@type.name.id}}.new
-        model.set_attributes(result)
-        model
-      end
-    end
+  # Create the from_sql method
+  def from_sql(result : DB::ResultSet) : self
+    model = {{@type.name.id}}.new
+    model.set_attributes(result)
+    model
   end
 
-  def raw_all(clause = "", params = [] of DB::Any)
+  private def raw_all(clause = "", params = [] of DB::Any)
     rows = [] of self
     @@adapter.select(@@select, clause, params) do |results|
       results.each do
-        rows << from_sql(results)
+        rows << self.from_sql(results)
       end
     end
     return rows

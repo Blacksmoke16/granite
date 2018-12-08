@@ -30,16 +30,26 @@ module Granite::Table
     class_getter table_name : String = {{name.stringify}}
   end
 
-  disable_granite_docs? def set_attributes(result : DB::ResultSet)
+  disable_granite_docs? protected def set_attributes(result : DB::ResultSet)
     # Loading from DB means existing records.
     @new_record = false
     {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
-      self.{{column.id}} = result.read({{column.type}})
+      {% ann = column.annotation(Granite::Column) %}
+      self.{{column.id}} =
+        {% if column.type == UUID? %}
+          if val = result.read
+            UUID.new val.as(String)
+          end
+        {% elsif column.type == UUID %}
+          UUID.new result.read.as(String)
+        {% else %}
+          result.read({{column.type}})
+        {% end %}
     {% end %}
     self
   end
 
-  disable_granite_docs? def set_attributes(hash : Hash(Symbol, DB::Any)) : self
+  disable_granite_docs? protected def set_attributes(hash : Hash(Symbol, DB::Any)) : self
     {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
       if val = hash[{{column.symbolize}}]?
         if val.is_a?({{column.type}})
@@ -52,7 +62,7 @@ module Granite::Table
     self
   end
 
-  disable_granite_docs? def set_attributes(hash : Hash(String, DB::Any)) : self
+  disable_granite_docs? protected def set_attributes(hash : Hash(String, DB::Any)) : self
     {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
       if val = hash[{{column.stringify}}]?
         if val.is_a?({{column.type}})

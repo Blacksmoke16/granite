@@ -10,7 +10,7 @@ require "./error"
 #
 # User.migrator.drop_and_create
 # # => "DROP TABLE IF EXISTS `users`;"
-# # => "CREATE TABLE `users` (id BIGSERIAL PRIMARY KEY, name VARCHAR(255));"
+# # => "CREATE TABLE `users` (id BIGINT AUTO INCREMENT PRIMARY KEY, name VARCHAR(255));"
 #
 # User.migrator(table_options: "ENGINE=InnoDB DEFAULT CHARSET=utf8").create
 # # => "CREATE TABLE ... ENGINE=InnoDB DEFAULT CHARSET=utf8;"

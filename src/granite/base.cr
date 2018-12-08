@@ -36,7 +36,6 @@ class Granite::Base
     include YAML::Serializable
     macro finished
       __process_select
-      __process_querying
       # __process_transactions
       __process_migrator
     end

@@ -94,7 +94,7 @@ abstract class Granite::Adapter::Base
     end
 
     # quotes a value of a given type
-    def quote_value(value : String? | Time?) : String
+    def quote_value(value) : String
       char = VALUE_QUOTING_CHAR
       "#{char}#{value}#{char}"
     end
