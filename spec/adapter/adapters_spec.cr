@@ -1,9 +1,9 @@
 require "../spec_helper"
 
-class Foo < Granite::Base
-  table_name foos
-  adapter mysql
-end
+@[Granite::Model(adapter: "pg")]
+class Foo < Granite::Base; end
+
+class Bar < Granite::Base; end
 
 describe Granite::Adapters do
   describe "registration" do
@@ -23,6 +23,12 @@ describe Granite::Adapters do
 
     it "should assign the correct adapter to a model" do
       adapter = Foo.adapter
+      adapter.name.should eq "pg"
+      adapter.url.should eq ENV["PG_DATABASE_URL"]
+    end
+
+    it "should assign the first adapter to a model if one is not provided" do
+      adapter = Bar.adapter
       adapter.name.should eq "mysql"
       adapter.url.should eq ENV["MYSQL_DATABASE_URL"]
     end

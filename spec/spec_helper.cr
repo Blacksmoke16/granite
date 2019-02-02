@@ -6,7 +6,7 @@ Granite::Adapters << Granite::Adapter::Mysql.new({name: "mysql", url: ENV["MYSQL
 Granite::Adapters << Granite::Adapter::Pg.new({name: "pg", url: ENV["PG_DATABASE_URL"]})
 Granite::Adapters << Granite::Adapter::Sqlite.new({name: "sqlite", url: ENV["SQLITE_DATABASE_URL"]})
 
-# Granite.settings.logger = Logger.new STDOUT
+Granite.settings.logger = Logger.new STDOUT
 
 require "spec"
 require "../src/granite"

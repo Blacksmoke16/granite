@@ -49,7 +49,7 @@ class Granite::Adapter::Mysql < Granite::Adapter::Base
     }
   end
 
-  def insert(table_name : String, columns : Array(Granite::Columns::ClassMethods::ColumnBase), params, lastval) : Int64
+  def insert(table_name : String, columns : Array(Granite::Columns::ClassMethods::ColumnBase), params, lastval : String? = nil)
     statement = String.build do |stmt|
       stmt << "INSERT INTO #{quote(table_name)} ("
       stmt << columns.map { |c| "#{quote(c.name)}" }.join(", ")

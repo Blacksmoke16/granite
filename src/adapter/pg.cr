@@ -25,7 +25,7 @@ class Granite::Adapter::Pg < Granite::Adapter::Base
     }
   end
 
-  def insert(table_name : String, columns : Array(Granite::Columns::ClassMethods::ColumnBase), params, lastval) : Int64
+  def insert(table_name : String, columns : Array(Granite::Columns::ClassMethods::ColumnBase), params, lastval : String? = nil)
     column_names : Array(String) = columns.map(&.name)
     statement = String.build do |stmt|
       stmt << "INSERT INTO #{quote(table_name)} ("

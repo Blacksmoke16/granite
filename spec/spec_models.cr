@@ -3,10 +3,8 @@ require "uuid"
 {% begin %}
   {% adapter_literal = env("CURRENT_ADAPTER").id %}
 
+  @[Granite::Model(table: "parents", adapter: "{{adapter_literal.id}}")]
   class Parent < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name parents
-
     @[Granite::Column(primary: true)]
     property id : Int64?
 
@@ -64,17 +62,17 @@ require "uuid"
   #   belongs_to :klass
   # end
 
-  class School < Granite::Base
-    adapter {{ adapter_literal }}
+  # class School < Granite::Base
+  #   adapter {{ adapter_literal }}
 
-    table_name schools
+  #   table_name schools
 
-    @[Granite::Column(primary: true)]
-    property custom_id : Int64?
+  #   @[Granite::Column(primary: true)]
+  #   property custom_id : Int64?
 
-    @[Granite::Column]
-    property name : String
-  end
+  #   @[Granite::Column]
+  #   property name : String
+  # end
 
   # class User < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -125,75 +123,75 @@ require "uuid"
   #   table_name profiles
   # end
 
-  class Nation::County < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name nation_counties
+  # class Nation::County < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name nation_counties
 
-    @[Granite::Column(primary: true)]
-    property id : Int64?
+  #   @[Granite::Column(primary: true)]
+  #   property id : Int64?
 
-    @[Granite::Column]
-    property name : String
-  end
+  #   @[Granite::Column]
+  #   property name : String
+  # end
 
-  class Review < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name reviews
+  # class Review < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name reviews
 
-    @[Granite::Column(primary: true)]
-    property id : Int64?
+  #   @[Granite::Column(primary: true)]
+  #   property id : Int64?
 
-    @[Granite::Column]
-    property name : String
+  #   @[Granite::Column]
+  #   property name : String
 
-    @[Granite::Column]
-    property downvotes : Int32?
+  #   @[Granite::Column]
+  #   property downvotes : Int32?
 
-    @[Granite::Column]
-    property upvotes : Int64?
+  #   @[Granite::Column]
+  #   property upvotes : Int64?
 
-    @[Granite::Column]
-    property sentiment : Float32?
+  #   @[Granite::Column]
+  #   property sentiment : Float32?
 
-    @[Granite::Column]
-    property interest : Float64?
+  #   @[Granite::Column]
+  #   property interest : Float64?
 
-    @[Granite::Column]
-    property published : Bool
+  #   @[Granite::Column]
+  #   property published : Bool
 
-    # @[Granite::Column]
-    property created_at : Time?
-  end
+  #   # @[Granite::Column]
+  #   property created_at : Time?
+  # end
 
-  class Empty < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name empties
+  # class Empty < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name empties
 
-    @[Granite::Column(primary: true)]
-    property id : Int64?
-  end
+  #   @[Granite::Column(primary: true)]
+  #   property id : Int64?
+  # end
 
-  class ReservedWord < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name "select"
+  # class ReservedWord < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name "select"
 
-    @[Granite::Column(primary: true)]
-    property id : Int64?
+  #   @[Granite::Column(primary: true)]
+  #   property id : Int64?
 
-    @[Granite::Column]
-    property all : String
-  end
+  #   @[Granite::Column]
+  #   property all : String
+  # end
 
-  class Kvs < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name kvs
+  # class Kvs < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name kvs
 
-    @[Granite::Column(primary: true, auto: false)]
-    property k : String?
+  #   @[Granite::Column(primary: true, auto: false)]
+  #   property k : String?
 
-    @[Granite::Column]
-    property v : String
-  end
+  #   @[Granite::Column]
+  #   property v : String
+  # end
 
   # class Person < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -230,16 +228,16 @@ require "uuid"
   #   field body : String
   # end
 
-  class Item < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name items
+  # class Item < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name items
 
-    @[Granite::Column(primary: true, auto: false)]
-    property item_id : String?
+  #   @[Granite::Column(primary: true, auto: false)]
+  #   property item_id : String?
 
-    @[Granite::Column]
-    property item_name : String
-  end
+  #   @[Granite::Column]
+  #   property item_name : String
+  # end
 
   # class NonAutoDefaultPK < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -274,75 +272,75 @@ require "uuid"
   #   field articleid : Int64
   # end
 
-  class SongThread < Granite::Base
-    adapter {{ env("CURRENT_ADAPTER").id }}
-    table_name song_threads
+  # class SongThread < Granite::Base
+  #   adapter {{ env("CURRENT_ADAPTER").id }}
+  #   table_name song_threads
 
-    @[Granite::Column(primary: true)]
-    property id : Int64?
+  #   @[Granite::Column(primary: true)]
+  #   property id : Int64?
 
-    @[Granite::Column]
-    property name : String
-  end
+  #   @[Granite::Column]
+  #   property name : String
+  # end
 
-  class CustomSongThread < Granite::Base
-    adapter {{ env("CURRENT_ADAPTER").id }}
-    table_name custom_table_name
+  # class CustomSongThread < Granite::Base
+  #   adapter {{ env("CURRENT_ADAPTER").id }}
+  #   table_name custom_table_name
 
-    @[Granite::Column(primary: true)]
-    property custom_primary_key : Int64?
+  #   @[Granite::Column(primary: true)]
+  #   property custom_primary_key : Int64?
 
-    @[Granite::Column]
-    property name : String
-  end
+  #   @[Granite::Column]
+  #   property name : String
+  # end
 
-  @[JSON::Serializable::Options(emit_nulls: true)]
-  @[YAML::Serializable::Options(emit_nulls: true)]
-  class TodoEmitNull < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name todos
+  # @[JSON::Serializable::Options(emit_nulls: true)]
+  # @[YAML::Serializable::Options(emit_nulls: true)]
+  # class TodoEmitNull < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name todos
 
-    @[Granite::Column(primary: true)]
-    property id : Int64?
+  #   @[Granite::Column(primary: true)]
+  #   property id : Int64?
 
-    @[Granite::Column]
-    property name : String
+  #   @[Granite::Column]
+  #   property name : String
 
-    @[Granite::Column]
-    property priority : Int32
-  end
+  #   @[Granite::Column]
+  #   property priority : Int32
+  # end
 
-  class Todo < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name todos
+  # class Todo < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name todos
 
-    @[Granite::Column(primary: true)]
-    property id : Int64?
+  #   @[Granite::Column(primary: true)]
+  #   property id : Int64?
 
-    @[Granite::Column]
-    property name : String
+  #   @[Granite::Column]
+  #   property name : String
 
-    @[Granite::Column]
-    property priority : Int32
-  end
+  #   @[Granite::Column]
+  #   property priority : Int32
+  # end
 
-  class AfterInit < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name after_json_init
+  # class AfterInit < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name after_json_init
 
-    @[Granite::Column(primary: true)]
-    property id : Int64?
+  #   @[Granite::Column(primary: true)]
+  #   property id : Int64?
 
-    @[Granite::Column]
-    property name : String
+  #   @[Granite::Column]
+  #   property name : String
 
-    @[Granite::Column]
-    property priority : Int32
+  #   @[Granite::Column]
+  #   property priority : Int32
 
-    def after_initialize
-      @priority = 1000
-    end
-  end
+  #   def after_initialize
+  #     @priority = 1000
+  #   end
+  # end
 
   # class ArticleViewModel < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -374,16 +372,16 @@ require "uuid"
   #   ArrayModel.migrator.drop_and_create
   # {% end %}
 
-  class UUIDModel < Granite::Base
-    adapter {{ adapter_literal }}
-    table_name uuids
+  # class UUIDModel < Granite::Base
+  #   adapter {{ adapter_literal }}
+  #   table_name uuids
 
-    @[Granite::Column(primary: true)]
-    property uuid : UUID?
+  #   @[Granite::Column(primary: true)]
+  #   property uuid : UUID?
 
-    @[Granite::Column]
-    property non_pk_uuid : UUID?
-  end
+  #   @[Granite::Column]
+  #   property non_pk_uuid : UUID?
+  # end
 
   # class TodoJsonOptions < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -410,14 +408,14 @@ require "uuid"
   # Student.migrator.drop_and_create
   # Klass.migrator.drop_and_create
   # Enrollment.migrator.drop_and_create
-  School.migrator.drop_and_create
+  # School.migrator.drop_and_create
   # User.migrator.drop_and_create
   # Profile.migrator.drop_and_create
-  Nation::County.migrator.drop_and_create
-  Review.migrator.drop_and_create
-  Empty.migrator.drop_and_create
-  ReservedWord.migrator.drop_and_create
-  Kvs.migrator.drop_and_create
+  # Nation::County.migrator.drop_and_create
+  # Review.migrator.drop_and_create
+  # Empty.migrator.drop_and_create
+  # ReservedWord.migrator.drop_and_create
+  # Kvs.migrator.drop_and_create
   # Person.migrator.drop_and_create
   # Company.migrator.drop_and_create
   # Book.migrator.drop_and_create
@@ -428,10 +426,10 @@ require "uuid"
   # Comment.migrator.drop_and_create
   # Todo.migrator.drop_and_create
   # TodoEmitNull.migrator.drop_and_create
-  AfterInit.migrator.drop_and_create
-  SongThread.migrator.drop_and_create
-  CustomSongThread.migrator.drop_and_create
-  UUIDModel.migrator.drop_and_create
+  # AfterInit.migrator.drop_and_create
+  # SongThread.migrator.drop_and_create
+  # CustomSongThread.migrator.drop_and_create
+  # UUIDModel.migrator.drop_and_create
   # TodoJsonOptions.migrator.drop_and_create
   # TodoYamlOptions.migrator.drop_and_create
   # Character.migrator.drop_and_create

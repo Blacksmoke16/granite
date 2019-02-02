@@ -40,7 +40,7 @@ class Granite::Adapter::Sqlite < Granite::Adapter::Base
     end
   end
 
-  def insert(table_name : String, columns : Array(Granite::Columns::ClassMethods::ColumnBase), params, lastval) : Int64
+  def insert(table_name : String, columns : Array(Granite::Columns::ClassMethods::ColumnBase), params, lastval : String? = nil) : Int64
     statement = String.build do |stmt|
       stmt << "INSERT INTO #{quote(table_name)} ("
       stmt << columns.map { |c| "#{quote(c.name)}" }.join(", ")
@@ -53,11 +53,7 @@ class Granite::Adapter::Sqlite < Granite::Adapter::Base
 
     open do |db|
       db.exec statement, params
-      if lastval
-        return db.scalar(last_val()).as(Int64)
-      else
-        return -1_i64
-      end
+      return lastval ? db.scalar(last_val()).as(Int64) : -1_i64
     end
   end
 

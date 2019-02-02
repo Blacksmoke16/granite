@@ -30,12 +30,10 @@ abstract class Granite::Adapter::Base
   # fields (configured using the sql_mapping directive in your model), and an optional
   # raw query string.  The clause and params is the query and params that is passed
   # in via .all() method
-  def select(query : Granite::Select::Container, clause = "", params = [] of DB::Any, &block) : Nil
+  def select(table : String, clause = "", params = [] of DB::Any, &block) : Nil
     clause = convert_placeholders clause
-    statement = query.custom ? "#{query.custom} #{clause}" : String.build do |stmt|
-      stmt << "SELECT "
-      stmt << query.columns.map { |c| "#{quote(query.table_name)}.#{quote(c.name)}" }.join(", ")
-      stmt << " FROM #{quote(query.table_name)} #{clause}"
+    statement = String.build do |stmt|
+      stmt << "SELECT * FROM #{quote(table)} #{clause}"
     end
 
     log statement, params

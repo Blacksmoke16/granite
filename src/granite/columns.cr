@@ -21,9 +21,10 @@ module Granite::Columns
         {% raise "Composite primary keys are not yet supported." if fields.select { |ivar| ann = ivar.annotation(Granite::Column); ann && ann[:primary] }.size > 1 %}
         {% for field in fields %}
           {% type = field.type.union? ? field.type.union_types.reject { |t| t == Nil }.first : field.type %}
-          {% pk_ann = field.annotation(Granite::Column) %}
-          {% auto = pk_ann && pk_ann[:auto] ? pk_ann[:auto] : false %}
-          {% primary = pk_ann && pk_ann[:primary] ? pk_ann[:primary] : false %}
+          {% col_ann = field.annotation(Granite::Column) %}
+          {% auto = col_ann && col_ann[:auto] ? col_ann[:auto] : false %}
+          {% primary = col_ann && col_ann[:primary] ? col_ann[:primary] : false %}
+          {% auto = col_ann[:auto] == nil && primary %}
           {% raise "Primary key '#{field.name}' of '#{@type.name}' must be nilable." if primary && !field.type.nilable? %}
           columns << ColumnInfo({{type}}).new({{field.stringify}}, {{field.type.nilable?}}, {{auto}}, {{primary}}, {{field.default_value}})
         {% end %}
