@@ -23,32 +23,26 @@ module Granite::Transactions
 
     disable_granite_docs? def create!(args : Hash(Symbol | String, DB::Any)) : self
       instance = create(args)
-
-      if instance.errors.any?
-        raise Granite::RecordNotSaved.new(self.name, instance)
-      end
-
+      # raise Granite::RecordNotSaved.new(self.name, instance) if instance.errors.any?
       instance
     end
   end
 
-  # macro __process_transactions
+  disable_granite_docs? def set_timestamps(*, to time = Time.now, mode = :create)
+    {% if @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) }.map(&.stringify).includes? "created_at" %}
+      if mode == :create
+        @created_at = time.to_utc.at_beginning_of_second
+      end
+    {% end %}
 
-  # disable_granite_docs? def set_timestamps(*, to time = Time.now, mode = :create)
-  #   {% if FIELDS.keys.stringify.includes? "created_at" %}
-  #     if mode == :create
-  #       @created_at = time.to_utc.at_beginning_of_second
-  #     end
-  #   {% end %}
-
-  #   {% if FIELDS.keys.stringify.includes? "updated_at" %}
-  #     @updated_at = time.to_utc.at_beginning_of_second
-  #   {% end %}
-  # end
+    {% if @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) }.map(&.stringify).includes? "updated_at" %}
+      @updated_at = time.to_utc.at_beginning_of_second
+    {% end %}
+  end
 
   private def __create
-    # set_timestamps
-    columns = self.class.columns.dup
+    set_timestamps
+    columns = self.class.columns
     params = values
     if primary_value.nil?
       params.shift
@@ -76,7 +70,7 @@ module Granite::Transactions
               @@adapter.insert(@@table_name, columns, params, lastval: nil)
             {% end %}
           {% else %}
-            {% raise "Failed to define #{@type.name}#save: Primary key must be defined as Int(32|64) for auto increment PKs. @[Granite::Column(primary: true)]\n\nFor natural keys set auto to false: @[Granite::Column(primary: trueauto: false)]" %}
+            {% raise "Failed to define #{@type.name}#save: Primary key must be defined as Int(32|64) for auto increment PKs. @[Granite::Column(primary: true)]\n\nFor natural keys set auto to false: @[Granite::Column(primary: true, auto: false)]" %}
           {% end %}
         rescue err : DB::Error
           raise err
@@ -87,29 +81,83 @@ module Granite::Transactions
     @new_record = false
   end
 
+  private def __update
+    set_timestamps mode: :update
+    columns = self.class.columns
+    params = values + [{{@type.instance_vars.find { |ivar| ann = ivar.annotation(Granite::Column); ann && ann[:primary] == true }.id}}]
+
+    begin
+      @@adapter.update @@table_name, self.class.primary_key.name, columns, params
+    rescue err
+      raise DB::Error.new(err.message)
+    end
+  end
+
+  private def __destroy
+    @@adapter.delete(@@table_name, self.class.primary_key.name, {{@type.instance_vars.find { |ivar| ann = ivar.annotation(Granite::Column); ann && ann[:primary] == true }.id}})
+    @destroyed = true
+  end
+
   # The save method will check to see if the primary exists yet. If it does it
   # will call the update method, otherwise it will call the create method.
   # This will update the timestamps appropriately.
   disable_granite_docs? def save
     begin
-      # __before_save
       if primary_value && !new_record?
-        # __before_update
-        # __update
-        # __after_update
+        __update
       else
-        # __before_create
         __create
-        # __after_create
       end
-      # __after_save
-    rescue ex : DB::Error | Granite::Callbacks::Abort
+    rescue ex : DB::Error
       if message = ex.message
         Granite.settings.logger.error "Save Exception: #{message}"
+        # errors << Granite::Error.new(:base, message)
       end
       return false
     end
     true
+  end
+
+  disable_granite_docs? def save!
+    save || raise Granite::RecordNotSaved.new(self.class.name, self)
+  end
+
+  disable_granite_docs? def update(**args)
+    update(args.to_h)
+  end
+
+  disable_granite_docs? def update(args : Hash(Symbol | String, DB::Any))
+    set_attributes(args)
+
+    save
+  end
+
+  disable_granite_docs? def update!(**args)
+    update!(args.to_h)
+  end
+
+  disable_granite_docs? def update!(args : Hash(Symbol | String, DB::Any))
+    set_attributes(args)
+
+    save!
+  end
+
+  # Destroy will remove this from the database.
+  disable_granite_docs? def destroy
+    begin
+      __destroy
+    rescue ex : DB::Error
+      if message = ex.message
+        Granite.settings.logger.error "Destroy Exception: #{message}"
+        # errors << Granite::Error.new(:base, message)
+      end
+      return false
+    end
+    true
+  end
+
+  disable_granite_docs? def destroy!
+    destroy || raise Granite::RecordNotDestroyed.new(self.class.name, self)
   end
 
   # Returns true if this object hasn't been saved yet.

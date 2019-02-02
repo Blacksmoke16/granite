@@ -1,5 +1,37 @@
 require "./base"
 require "mysql"
+require "uuid"
+require "uuid/json"
+
+# :nodoc:
+abstract struct MySql::Type
+  def self.type_for(t : ::UUID.class)
+    MySql::Type::UUID
+  end
+
+  decl_type UUID, 0xfeu8, ::UUID do
+    def self.write(packet, v : ::UUID)
+      packet.write_lenenc_string v.to_s
+    end
+
+    def self.read(packet)
+      packet.read_lenenc_string
+    end
+  end
+end
+
+# :nodoc:
+class MySql::ResultSet
+  def read(t : ::UUID.class)
+    ::UUID.new(read(String))
+  end
+
+  def read(t : UUID?)
+    if v = read(String?)
+      UUID.new(v)
+    end
+  end
+end
 
 # Mysql implementation of the Adapter
 class Granite::Adapter::Mysql < Granite::Adapter::Base
@@ -82,34 +114,8 @@ class Granite::Adapter::Mysql < Granite::Adapter::Base
     return "SELECT LAST_INSERT_ID()"
   end
 
-  # This will update a row in the database.
-  def update(table_name, primary_name, fields, params)
-    statement = String.build do |stmt|
-      stmt << "UPDATE #{quote(table_name)} SET "
-      stmt << fields.map { |name| "#{quote(name)}=?" }.join(", ")
-      stmt << " WHERE #{quote(primary_name)}=?"
-    end
-
-    log statement, params
-
-    open do |db|
-      db.exec statement, params
-    end
-  end
-
-  # This will delete a row from the database.
-  def delete(table_name, primary_name, value)
-    statement = "DELETE FROM #{quote(table_name)} WHERE #{quote(primary_name)}=?"
-
-    log statement, value
-
-    open do |db|
-      db.exec statement, value
-    end
-  end
-
-  private def ensure_clause_template(clause : String) : String
-    clause = clause.gsub(/\$\d+/, '?') if clause =~ /\$\d+/
+  private def convert_placeholders(clause : String) : String
+    clause = clause.gsub(/\=\ \$\d+/, '?') if clause =~ /\$\d+/
     clause
   end
 end

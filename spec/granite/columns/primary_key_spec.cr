@@ -11,8 +11,8 @@ describe "#new" do
 end
 
 describe "#new(primary_key: value)" do
-  it "ignores the value in default" do
-    Parent.new(id: 1).id.should eq(nil)
+  pending "does not set the value when the primary is defined as `auto: true`" do
+    Parent.new(id: 1).id.should be_nil
   end
 
   it "sets the value when the primary is defined as `auto: false`" do

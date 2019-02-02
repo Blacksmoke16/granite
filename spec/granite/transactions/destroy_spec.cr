@@ -65,20 +65,4 @@ describe "#destroy!" do
     found = Parent.find id
     found.should be_nil
   end
-
-  it "does not destroy but raise an exception" do
-    callback_with_abort = CallbackWithAbort.new
-    callback_with_abort.name = "DestroyRaisesException"
-    callback_with_abort.abort_at = "temp"
-    callback_with_abort.do_abort = false
-    callback_with_abort.save!
-    callback_with_abort.abort_at = "before_destroy"
-    callback_with_abort.do_abort = true
-
-    expect_raises(Granite::RecordNotDestroyed, "CallbackWithAbort") do
-      callback_with_abort.destroy!
-    end
-
-    CallbackWithAbort.find_by(name: callback_with_abort.name).should_not be_nil
-  end
 end

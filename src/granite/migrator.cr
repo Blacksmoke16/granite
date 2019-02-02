@@ -5,81 +5,89 @@ require "./error"
 # ```crystal
 # class User < Granite::Base
 #   adapter mysql
-#   field name : String
+#   property name : String
 # end
 #
 # User.migrator.drop_and_create
 # # => "DROP TABLE IF EXISTS `users`;"
-# # => "CREATE TABLE `users` (id BIGINT AUTO INCREMENT PRIMARY KEY, name VARCHAR(255));"
+# # => "CREATE TABLE `users` (id BIGINT AUTO INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL);"
 #
 # User.migrator(table_options: "ENGINE=InnoDB DEFAULT CHARSET=utf8").create
 # # => "CREATE TABLE ... ENGINE=InnoDB DEFAULT CHARSET=utf8;"
 # ```
 module Granite::Migrator
-  class Base
-    @quoted_table_name : String
+  module ClassMethods
+    def migrator(**args)
+      MigratorBase(self).new(**args)
+    end
+  end
 
-    def initialize(klass, @table_options = "")
-      @quoted_table_name = klass.quoted_table_name
+  private struct MigratorBase(Model)
+    getter raw_sql : String?
+
+    def initialize(@table_options = ""); end
+
+    def raw_sql : String
+      if stmt = @raw_sql
+        stmt
+      else
+        build_query
+      end
     end
 
-    def drop_and_create
+    # Drops and recreates `self`'s table
+    def drop_and_create : DB::ExecResult
       drop
       create
     end
 
-    def drop
+    # Drops the `self`'s table
+    def drop : DB::ExecResult
+      Model.exec "DROP TABLE IF EXISTS #{Model.quoted_table_name};"
     end
 
-    def create
+    # Creates the `self`'s table
+    def create : DB::ExecResult
+      Model.exec raw_sql
     end
-  end
 
-  macro __process_migrator
-    {% klass = @type.name %}
-    {% adapter = "#{klass}.adapter".id %}
+    # Builds the SQL CREATE TABLE statement for `self`
+    def build_query : String
+      resolve = ->(key : String) {
+        Model.adapter.class.schema_type?(key) || raise "Migrator(#{Model.adapter}) doesn't support '#{key}' yet."
+      }
 
-    disable_granite_docs? class Migrator < Granite::Migrator::Base
-      def drop
-        {{klass}}.exec "DROP TABLE IF EXISTS #{ @quoted_table_name };"
-      end
+      stmt = String.build do |s|
+        s << "CREATE TABLE #{Model.quoted_table_name}("
 
-      def create
-        resolve = ->(key : String) {
-          {{adapter}}.class.schema_type?(key) || raise "Migrator(#{ {{adapter}}.class.name }) doesn't support '#{key}' yet."
-        }
+        column_list = Model.columns
 
+        # Add in the default id Int64 auto increment PK if no columns are set as the PK
+        column_list.unshift Model.primary_key if column_list.none?(&.primary)
 
-        stmt = String.build do |s|
-          s << "CREATE TABLE #{ @quoted_table_name }("
-
-          {{@type}}.columns.each do |c|
-            k = {{adapter}}.quote(c.name)
-            v = if %(created_at updated_at).includes?(c.name)
-                  resolve.call(c.name)
-                elsif c.auto
-                  resolve.call("AUTO_#{c.type}")
-                else
-                 resolve.call(c.type.to_s)
-                 end
-            s << "#{k} #{v}"
-            s << " PRIMARY KEY" if c.primary == true
-            s << (c.nilable && !c.primary ? " NULL" : " NOT NULL")
-            s << " DEFAULT #{{{adapter}}.quote_value(c.default)}" unless c.default.nil?
-            s << ','
-          end
-
-          s.chomp! 44_u8
-
-          s << ")#{@table_options};"
+        column_list.each do |c|
+          k = Model.adapter.quote(c.name)
+          v = if %(created_at updated_at).includes?(c.name)
+                resolve.call(c.name)
+              elsif c.auto
+                resolve.call("AUTO_#{c.type}")
+              else
+                resolve.call(c.type.to_s)
+              end
+          s << "#{k} #{v}"
+          s << " PRIMARY KEY" if c.primary
+          s << (c.nilable && !c.primary ? " NULL" : " NOT NULL")
+          s << " DEFAULT #{Model.adapter.quote_value(c.default)}" unless c.default.nil?
+          s << ','
         end
 
-        {{klass}}.exec stmt
-      end
-    end
+        # Remove trailing comma
+        s.chomp! 44_u8
 
-    disable_granite_docs? def self.migrator(**args)
-      Migrator.new(self, **args)
+        s << ")#{@table_options};"
+      end
+
+      @raw_sql = stmt
     end
   end
 end

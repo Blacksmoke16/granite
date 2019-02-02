@@ -1,5 +1,15 @@
 require "./base"
 require "sqlite3"
+require "uuid"
+require "uuid/json"
+
+# :nodoc:
+class SQLite3::Statement < DB::Statement
+  private def bind_arg(index, value : UUID)
+    _uuid = value.to_s
+    check LibSQLite3.bind_text(self, index, _uuid, _uuid.bytesize, nil)
+  end
+end
 
 # Sqlite implementation of the Adapter
 class Granite::Adapter::Sqlite < Granite::Adapter::Base
@@ -82,38 +92,12 @@ class Granite::Adapter::Sqlite < Granite::Adapter::Base
     end
   end
 
-  private def last_val
+  private def last_val : String
     return "SELECT LAST_INSERT_ROWID()"
   end
 
-  # This will update a row in the database.
-  def update(table_name, primary_name, fields, params)
-    statement = String.build do |stmt|
-      stmt << "UPDATE #{quote(table_name)} SET "
-      stmt << fields.map { |name| "#{quote(name)}=?" }.join(", ")
-      stmt << " WHERE #{quote(primary_name)}=?"
-    end
-
-    log statement, params
-
-    open do |db|
-      db.exec statement, params
-    end
-  end
-
-  # This will delete a row from the database.
-  def delete(table_name, primary_name, value)
-    statement = "DELETE FROM #{quote(table_name)} WHERE #{quote(primary_name)}=?"
-
-    log statement, value
-
-    open do |db|
-      db.exec statement, value
-    end
-  end
-
-  private def ensure_clause_template(clause : String) : String
-    clause = clause.gsub(/\$\d+/, '?') if clause =~ /\$\d+/
+  private def convert_placeholders(clause : String) : String
+    clause = clause.gsub(/(?!\=\ )(\$\d+)/, '?') if clause =~ /\$\d+/
     clause
   end
 end

@@ -93,39 +93,12 @@ class Granite::Adapter::Pg < Granite::Adapter::Base
     end
   end
 
-  # This will update a row in the database.
-  def update(table_name : String, primary_name : String, columns : Array(ColmunBase), params)
-    column_names : Array(String) = columns.map(&.name)
-    statement = String.build do |stmt|
-      stmt << "UPDATE #{quote(table_name)} SET "
-      stmt << columns.map { |c| "#{quote(c.name)}=$#{column_names.index(c.name).not_nil! + 1}" }.join(", ")
-      stmt << " WHERE #{quote(primary_name)}=$#{columns.size + 1}"
-    end
-
-    log statement, params
-
-    open do |db|
-      db.exec statement, params
-    end
-  end
-
-  # This will delete a row from the database.
-  def delete(table_name : String, primary_name : String, value)
-    statement = "DELETE FROM #{quote(table_name)} WHERE #{quote(primary_name)}=$1"
-
-    log statement, value
-
-    open do |db|
-      db.exec statement, value
-    end
-  end
-
-  private def ensure_clause_template(clause : String) : String
-    if clause.includes?('?')
+  private def convert_placeholders(clause : String) : String
+    if clause =~ /=\ \?/
       num_subs = clause.count('?')
 
       num_subs.times do |i|
-        clause = clause.sub('?', "$#{i + 1}")
+        clause = clause.sub(/\=\ \?/, "= $#{i + 1}")
       end
     end
 

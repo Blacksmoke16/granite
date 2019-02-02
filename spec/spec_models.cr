@@ -1,8 +1,3 @@
-class Granite::Base
-  def self.drop_and_create
-  end
-end
-
 require "uuid"
 
 {% begin %}
@@ -19,10 +14,10 @@ require "uuid"
     property name : String
 
     @[Granite::Column]
-    property created_at : Time
+    property created_at : Time?
 
     @[Granite::Column]
-    property updated_at : Time
+    property updated_at : Time?
 
     # has_many :students, class_name: Student
   end
@@ -189,39 +184,6 @@ require "uuid"
     property all : String
   end
 
-  # class Callback < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name callbacks
-  #   primary id : Int64
-  #   field name : String
-
-  #   property history : IO::Memory = IO::Memory.new
-
-  #   {% for name in Granite::Callbacks::CALLBACK_NAMES %}
-  #     {{name.id}} _{{name.id}}
-  #     private def _{{name.id}}
-  #       history << "{{name.id}}\n"
-  #     end
-  #   {% end %}
-  # end
-
-  # class CallbackWithAbort < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name callbacks_with_abort
-  #   primary abort_at : String, auto: false
-  #   field do_abort : Bool
-  #   field name : String
-
-  #   property history : IO::Memory = IO::Memory.new
-
-  #   {% for name in Granite::Callbacks::CALLBACK_NAMES %}
-  #     {{name.id}} do
-  #       abort! if do_abort && abort_at == "{{name.id}}"
-  #       history << "{{name.id}}\n"
-  #     end
-  #   {% end %}
-  # end
-
   class Kvs < Granite::Base
     adapter {{ adapter_literal }}
     table_name kvs
@@ -268,19 +230,16 @@ require "uuid"
   #   field body : String
   # end
 
-  # class Item < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name items
+  class Item < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name items
 
-  #   primary item_id : String, auto: false
-  #   field item_name : String
+    @[Granite::Column(primary: true, auto: false)]
+    property item_id : String?
 
-  #   before_create :generate_uuid
-
-  #   def generate_uuid
-  #     @item_id = UUID.random.to_s
-  #   end
-  # end
+    @[Granite::Column]
+    property item_name : String
+  end
 
   # class NonAutoDefaultPK < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -315,50 +274,75 @@ require "uuid"
   #   field articleid : Int64
   # end
 
-  # class SongThread < Granite::Base
-  #   adapter {{ env("CURRENT_ADAPTER").id }}
-  #   table_name song_threads
-  #   field name : String
-  # end
+  class SongThread < Granite::Base
+    adapter {{ env("CURRENT_ADAPTER").id }}
+    table_name song_threads
 
-  # class CustomSongThread < Granite::Base
-  #   adapter {{ env("CURRENT_ADAPTER").id }}
-  #   table_name custom_table_name
-  #   primary custom_primary_key : Int64
-  #   field name : String
-  # end
+    @[Granite::Column(primary: true)]
+    property id : Int64?
 
-  # @[JSON::Serializable::Options(emit_nulls: true)]
-  # @[YAML::Serializable::Options(emit_nulls: true)]
-  # class TodoEmitNull < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name todos
+    @[Granite::Column]
+    property name : String
+  end
 
-  #   field name : String
-  #   field priority : Int32
-  #   timestamps
-  # end
+  class CustomSongThread < Granite::Base
+    adapter {{ env("CURRENT_ADAPTER").id }}
+    table_name custom_table_name
 
-  # class Todo < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name todos
+    @[Granite::Column(primary: true)]
+    property custom_primary_key : Int64?
 
-  #   field name : String
-  #   field priority : Int32
-  #   timestamps
-  # end
+    @[Granite::Column]
+    property name : String
+  end
 
-  # class AfterInit < Granite::Base
-  #   adapter {{ adapter_literal }}
-  #   table_name after_json_init
+  @[JSON::Serializable::Options(emit_nulls: true)]
+  @[YAML::Serializable::Options(emit_nulls: true)]
+  class TodoEmitNull < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name todos
 
-  #   field name : String
-  #   field priority : Int32
+    @[Granite::Column(primary: true)]
+    property id : Int64?
 
-  #   def after_initialize
-  #     @priority = 1000
-  #   end
-  # end
+    @[Granite::Column]
+    property name : String
+
+    @[Granite::Column]
+    property priority : Int32
+  end
+
+  class Todo < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name todos
+
+    @[Granite::Column(primary: true)]
+    property id : Int64?
+
+    @[Granite::Column]
+    property name : String
+
+    @[Granite::Column]
+    property priority : Int32
+  end
+
+  class AfterInit < Granite::Base
+    adapter {{ adapter_literal }}
+    table_name after_json_init
+
+    @[Granite::Column(primary: true)]
+    property id : Int64?
+
+    @[Granite::Column]
+    property name : String
+
+    @[Granite::Column]
+    property priority : Int32
+
+    def after_initialize
+      @priority = 1000
+    end
+  end
 
   # class ArticleViewModel < Granite::Base
   #   adapter {{ adapter_literal }}
@@ -394,8 +378,11 @@ require "uuid"
     adapter {{ adapter_literal }}
     table_name uuids
 
-    @[Granite::Column(primary: true]
+    @[Granite::Column(primary: true)]
     property uuid : UUID?
+
+    @[Granite::Column]
+    property non_pk_uuid : UUID?
   end
 
   # class TodoJsonOptions < Granite::Base
@@ -430,23 +417,20 @@ require "uuid"
   Review.migrator.drop_and_create
   Empty.migrator.drop_and_create
   ReservedWord.migrator.drop_and_create
-  # Callback.migrator.drop_and_create
-  # CallbackWithAbort.migrator.drop_and_create
   Kvs.migrator.drop_and_create
   # Person.migrator.drop_and_create
   # Company.migrator.drop_and_create
   # Book.migrator.drop_and_create
   # BookReview.migrator.drop_and_create
-  # Item.migrator.drop_and_create
   # NonAutoDefaultPK.migrator.drop_and_create
   # NonAutoCustomPK.migrator.drop_and_create
   # Article.migrator.drop_and_create
   # Comment.migrator.drop_and_create
   # Todo.migrator.drop_and_create
   # TodoEmitNull.migrator.drop_and_create
-  # AfterInit.migrator.drop_and_create
-  # SongThread.migrator.drop_and_create
-  # CustomSongThread.migrator.drop_and_create
+  AfterInit.migrator.drop_and_create
+  SongThread.migrator.drop_and_create
+  CustomSongThread.migrator.drop_and_create
   UUIDModel.migrator.drop_and_create
   # TodoJsonOptions.migrator.drop_and_create
   # TodoYamlOptions.migrator.drop_and_create

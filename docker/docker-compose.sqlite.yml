@@ -1,7 +1,9 @@
 version: '2'
 services:
   spec:
-    command: 'bash -c "cd /app/user && bin/ameba && crystal tool format --check && sqlite3 --version && crystal spec spec/granite/querying/all_spec.cr"'
+    command: 'bash -c "cd /app/user && bin/ameba && crystal tool format --check && sqlite3 --version && crystal spec spec/granite/transactions/destroy_spec.cr"'
+    volumes: 
+      - "../../granite:/app/user"
     extends:
       file: ../docker-compose.yml
       service: spec

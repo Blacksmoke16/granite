@@ -115,20 +115,20 @@ describe "#save" do
     end
   end
 
-  describe "using a reserved word as a column name" do
-    # `all` is a reserved word in almost RDB like MySQL, PostgreSQL
-    it "creates and updates" do
-      reserved_word = ReservedWord.new
-      reserved_word.all = "foo"
-      reserved_word.save
-      reserved_word.errors.empty?.should be_true
+  # describe "using a reserved word as a column name" do
+  #   # `all` is a reserved word in almost RDB like MySQL, PostgreSQL
+  #   it "creates and updates" do
+  #     reserved_word = ReservedWord.new
+  #     reserved_word.all = "foo"
+  #     reserved_word.save
+  #     reserved_word.errors.empty?.should be_true
 
-      reserved_word.all = "bar"
-      reserved_word.save
-      reserved_word.errors.empty?.should be_true
-      reserved_word.all.should eq("bar")
-    end
-  end
+  #     reserved_word.all = "bar"
+  #     reserved_word.save
+  #     reserved_word.errors.empty?.should be_true
+  #     reserved_word.all.should eq("bar")
+  #   end
+  # end
 end
 
 describe "#save!" do

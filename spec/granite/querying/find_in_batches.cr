@@ -3,6 +3,8 @@ require "../../spec_helper"
 describe Granite::Querying do
   describe ".find_in_batches" do
     it "finds records in batches and yields all the records" do
+      Parent.clear
+
       model_ids = (0...100).map do |i|
         Parent.new(name: "model_#{i}").tap(&.save)
       end.map(&.id)
@@ -17,6 +19,8 @@ describe Granite::Querying do
     end
 
     it "doesnt yield when no records are found" do
+      Parent.clear
+
       Parent.find_in_batches do
         fail "find_in_batches did yield but shouldn't have"
       end
@@ -31,6 +35,8 @@ describe Granite::Querying do
     end
 
     it "returns a small batch when there arent enough results" do
+      Parent.clear
+
       (0...9).each do |i|
         Parent.new(name: "model_#{i}").save
       end
@@ -41,6 +47,8 @@ describe Granite::Querying do
     end
 
     it "can start from an offset other than 0" do
+      Parent.clear
+
       created_models = (0...10).map do |i|
         Parent.new(name: "model_#{i}").tap(&.save)
       end.map(&.id)
@@ -61,6 +69,8 @@ describe Granite::Querying do
     end
 
     it "doesnt obliterate a parameterized query" do
+      Parent.clear
+
       created_models = (0...10).map do |i|
         Parent.new(name: "model_#{i}").tap(&.save)
       end.map(&.id)

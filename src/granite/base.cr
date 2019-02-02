@@ -1,44 +1,28 @@
-require "./collection"
-require "./association_collection"
-require "./associations"
-require "./callbacks"
+require "./adapters"
 require "./columns"
-require "./query/executors/base"
-require "./query/**"
+require "./migrator"
 require "./querying"
 require "./settings"
 require "./table"
 require "./transactions"
-require "./migrator"
-require "./select"
 require "./version"
-require "./adapters"
 
 # Granite::Base is the base class for your model objects.
 class Granite::Base
-  include Associations
-  include Callbacks
-  include Transactions
-  include Migrator
-  include Select
   include Columns
+  include Migrator
   include Table
+  include Transactions
 
   extend Columns::ClassMethods
   extend Table::ClassMethods
   extend Transactions::ClassMethods
-
+  extend Migrator::ClassMethods
   extend Querying
-  extend Query::BuilderMethods
 
   macro inherited
     include JSON::Serializable
     include YAML::Serializable
-    macro finished
-      __process_select
-      # __process_transactions
-      __process_migrator
-    end
   end
 
   def initialize(**args : Object)

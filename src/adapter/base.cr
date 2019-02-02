@@ -30,8 +30,8 @@ abstract class Granite::Adapter::Base
   # fields (configured using the sql_mapping directive in your model), and an optional
   # raw query string.  The clause and params is the query and params that is passed
   # in via .all() method
-  def select(query : Granite::Select::Container, clause = "", params = [] of DB::Any, &block)
-    clause = ensure_clause_template(clause)
+  def select(query : Granite::Select::Container, clause = "", params = [] of DB::Any, &block) : Nil
+    clause = convert_placeholders clause
     statement = query.custom ? "#{query.custom} #{clause}" : String.build do |stmt|
       stmt << "SELECT "
       stmt << query.columns.map { |c| "#{quote(query.table_name)}.#{quote(c.name)}" }.join(", ")
@@ -58,20 +58,38 @@ abstract class Granite::Adapter::Base
     end
   end
 
-  # Place holder conversion
-  abstract def ensure_clause_template(clause : String) : String
+  # This will update a row in the database.
+  def update(table_name : String, primary_name : String, columns : Array(Granite::Columns::ClassMethods::ColumnBase), params) : DB::ExecResult
+    statement = String.build do |stmt|
+      stmt << "UPDATE #{quote(table_name)} SET "
+      stmt << columns.map { |c| "#{quote(c.name)} = ?" }.join(", ")
+      stmt << " WHERE #{quote(primary_name)} = ?"
+    end
+    statement = convert_placeholders statement
 
-  # This will insert a row in the database and return the id generated.
-  abstract def insert(table_name : String, columns : Array(ColumnBase), params, lastval) : Int64
+    log statement, params
+
+    open do |db|
+      db.exec statement, params
+    end
+  end
+
+  # This will delete a row from the database.
+  def delete(table_name : String, primary_name, value)
+    statement = convert_placeholders "DELETE FROM #{quote(table_name)} WHERE #{quote(primary_name)} = ?"
+
+    log statement, value
+
+    open do |db|
+      db.exec statement, value
+    end
+  end
+
+  # Prepared statement placehlder conversion
+  abstract def convert_placeholders(clause : String) : String
 
   # This will insert an array of models as one insert statement
   abstract def import(table_name : String, primary_name : String, auto : String, columns : Array(ColumnBase), model_array, **options)
-
-  # This will update a row in the database.
-  abstract def update(table_name : String, primary_name : String, columns : Array(ColumnBase), params)
-
-  # This will delete a row from the database.
-  abstract def delete(table_name : String, primary_name : String, value)
 
   module Schema
     TYPES = {
@@ -95,8 +113,11 @@ abstract class Granite::Adapter::Base
 
     # quotes a value of a given type
     def quote_value(value) : String
-      char = VALUE_QUOTING_CHAR
-      "#{char}#{value}#{char}"
+      String.build do |str|
+        str << QUOTING_CHAR
+        str << value
+        str << QUOTING_CHAR
+      end
     end
 
     # quotes a value of a given type

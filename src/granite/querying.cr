@@ -27,8 +27,9 @@ module Granite::Querying
   # that you are using so you are not restricted or dummied down to support a
   # DSL.
   # Lazy load prevent running unnecessary queries from unused variables.
-  def all(clause = "", params = [] of DB::Any) : Collection(self)
-    Collection(self).new(->{ raw_all(clause, params) })
+  def all(clause = "", params = [] of DB::Any)
+    [self.new]
+    # Collection(self).new(->{ raw_all(clause, params) })
   end
 
   # First adds a `LIMIT 1` clause to the query and returns the first result

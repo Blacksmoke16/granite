@@ -10,7 +10,7 @@ module Granite::Columns
 
     private record ColumnInfo(T) < ColumnBase, name : String, nilable : Bool, auto : Bool = false, primary : Bool = false, default : T? = nil, type : T.class = T
 
-    protected def primary_key : ColumnBase
+    def primary_key : ColumnBase
       columns.find(ColumnInfo(Int64).new "id", false, true, true) { |f| f.primary }
     end
 
@@ -18,13 +18,14 @@ module Granite::Columns
       columns = [] of ColumnBase
       {% begin %}
         {% fields = @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
+        {% raise "Composite primary keys are not yet supported." if fields.select { |ivar| ann = ivar.annotation(Granite::Column); ann && ann[:primary] }.size > 1 %}
         {% for field in fields %}
           {% type = field.type.union? ? field.type.union_types.reject { |t| t == Nil }.first : field.type %}
           {% pk_ann = field.annotation(Granite::Column) %}
           {% auto = pk_ann && pk_ann[:auto] ? pk_ann[:auto] : false %}
           {% primary = pk_ann && pk_ann[:primary] ? pk_ann[:primary] : false %}
-          {% raise "Primary key #{field.name} of #{@type.name} should be nilable." if primary && !field.type.nilable? %}
-          columns << ColumnInfo({{type}}).new({{field.stringify}}, {{field.type.nilable?}}, {{!auto && primary ? true : auto}}, {{primary}}, {{field.default_value}})
+          {% raise "Primary key '#{field.name}' of '#{@type.name}' must be nilable." if primary && !field.type.nilable? %}
+          columns << ColumnInfo({{type}}).new({{field.stringify}}, {{field.type.nilable?}}, {{auto}}, {{primary}}, {{field.default_value}})
         {% end %}
       {% end %}
       columns
@@ -33,7 +34,7 @@ module Granite::Columns
 
   private def primary_value
     {% begin %}
-      {% pk = @type.instance_vars.find { |ivar| ivar = ivar.annotation(Granite::Column); ivar && ivar[:primary] } %}
+      {% pk = @type.instance_vars.find { |ivar| ann = ivar.annotation(Granite::Column); ann && ann[:primary] } %}
       {% if pk %} @{{pk.id}} {% else %} nil {% end %}
     {% end %}
   end

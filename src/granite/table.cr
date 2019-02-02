@@ -34,7 +34,6 @@ module Granite::Table
     # Loading from DB means existing records.
     @new_record = false
     {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
-      {% ann = column.annotation(Granite::Column) %}
       self.{{column.id}} =
         {% if column.type == UUID? %}
           if val = result.read
@@ -50,21 +49,8 @@ module Granite::Table
   end
 
   disable_granite_docs? protected def set_attributes(hash : Hash(Symbol, DB::Any)) : self
-    {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
+    {% for column in @type.instance_vars.select { |ivar| ann = ivar.annotation(Granite::Column); ann && (ann[:auto] == false || ann[:auto] == nil) } %}
       if val = hash[{{column.symbolize}}]?
-        if val.is_a?({{column.type}})
-          @{{column.id}} = val
-        else
-          raise "Expected {{column.id}} to be {{column.type}} but got #{typeof(val)}."
-        end
-      end
-    {% end %}
-    self
-  end
-
-  disable_granite_docs? protected def set_attributes(hash : Hash(String, DB::Any)) : self
-    {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
-      if val = hash[{{column.stringify}}]?
         if val.is_a?({{column.type}})
           @{{column.id}} = val
         else
