@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
 describe "(Natural Key) #save" do
-  # it "fails when a primary key is not set" do
-  #   kv = Kvs.new
-  #   kv.save.should be_false
-  #   kv.errors.first.message.should eq "Primary key('k') cannot be null"
-  # end
+  it "fails when a primary key is not set" do
+    kv = Kvs.new
+    kv.save.should be_false
+    kv.granite_errors.first.message.should eq "Primary key('k') cannot be null"
+  end
 
   it "creates a new object when a primary key is given" do
     kv = Kvs.new

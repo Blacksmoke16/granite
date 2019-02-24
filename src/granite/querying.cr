@@ -57,8 +57,8 @@ module Granite::Querying
     adapter.open { |db| db.exec(clause) }
   end
 
-  def query(clause = "", params = [] of DB::Any)
-    adapter.open { |db| db.query(clause, params) }
+  def query(clause = "", params = [] of DB::Any, &block)
+    adapter.open { |db| yield db.query(clause, params) }
   end
 
   def scalar(clause = "", &block)

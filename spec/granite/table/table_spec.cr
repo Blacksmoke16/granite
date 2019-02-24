@@ -1,22 +1,19 @@
 require "../../spec_helper"
 
 describe Granite::Table do
-  describe "#table_name" do
+  describe ".table" do
     it "sets the table name to name specified" do
-      CustomSongThread.table_name.should eq "custom_table_name"
+      CustomSongThread.table.should eq "custom_table_name"
     end
 
     it "sets the table name based on class name if not specified" do
-      SongThread.table_name.should eq "song_threads"
+      SongThread.table.should eq "song_threads"
     end
   end
 
-  describe "#primary" do
-    it "sets the primary key name to name specified" do
-      CustomSongThread.primary_key.name.should eq "custom_primary_key"
-    end
-    it "sets the primary key name to id if not specified" do
-      SongThread.primary_key.name.should eq "id"
+  describe ".adapter" do
+    it "returns the model's adapter" do
+      ["sqlite", "pg", "mysql"].should contain CustomSongThread.adapter.name
     end
   end
 end

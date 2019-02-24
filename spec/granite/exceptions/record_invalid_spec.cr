@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 describe Granite::RecordNotSaved do
-  it "should have a message" do
+  pending "should have a message" do
     parent = Parent.new
     parent.save
 
@@ -11,7 +11,7 @@ describe Granite::RecordNotSaved do
       .should eq("Could not process Parent")
   end
 
-  it "should have a model" do
+  pending "should have a model" do
     parent = Parent.new
     parent.save
 

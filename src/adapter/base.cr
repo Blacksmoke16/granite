@@ -60,7 +60,7 @@ abstract class Granite::Adapter::Base
   def update(table_name : String, primary_name : String, columns : Array(Granite::Columns::ClassMethods::ColumnBase), params) : DB::ExecResult
     statement = String.build do |stmt|
       stmt << "UPDATE #{quote(table_name)} SET "
-      stmt << columns.map { |c| "#{quote(c.name)} = ?" }.join(", ")
+      stmt << columns.map { |c| "#{quote(c.name)} = ?" }.join(',')
       stmt << " WHERE #{quote(primary_name)} = ?"
     end
     statement = convert_placeholders statement

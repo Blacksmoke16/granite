@@ -5,14 +5,16 @@ require "./querying"
 require "./settings"
 require "./table"
 require "./transactions"
+require "./validations"
 require "./version"
 
 # Granite::Base is the base class for your model objects.
-class Granite::Base
+abstract class Granite::Base
   include Columns
   include Migrator
   include Table
   include Transactions
+  include Validations
 
   extend Columns::ClassMethods
   extend Table::ClassMethods
