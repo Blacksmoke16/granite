@@ -86,9 +86,6 @@ abstract class Granite::Adapter::Base
   # Prepared statement placehlder conversion
   abstract def convert_placeholders(clause : String) : String
 
-  # This will insert an array of models as one insert statement
-  abstract def import(table_name : String, primary_name : String, auto : String, columns : Array(ColumnBase), model_array, **options)
-
   module Schema
     TYPES = {
       "Bool"    => "BOOL",

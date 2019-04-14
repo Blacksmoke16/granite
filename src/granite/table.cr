@@ -38,22 +38,13 @@ module Granite::Table
   def set_attributes(result : DB::ResultSet) : self
     @new_record = false
     {% for column in @type.instance_vars.select { |ivar| ivar.annotation(Granite::Column) } %}
-      self.{{column.id}} =
-        {% if column.type == UUID? %}
-          if val = result.read
-            UUID.new val.as(String)
-          end
-        {% elsif column.type == UUID %}
-          UUID.new result.read.as(String)
-        {% else %}
-          result.read {{column.type}}
-        {% end %}
+      self.{{column.id}} = Granite::Type.convert_type result, {{column.type}}
     {% end %}
     self
   end
 
   def set_attributes(hash : Hash(Symbol, DB::Any)) : self
-    {% for column in @type.instance_vars %}
+    {% for column in @type.instance_vars.reject { |ivar| ann = ivar.annotation(Granite::Column); ann && ann[:primary] && (ann[:auto] == true || ann[:auto] == nil) } %}
       if val = hash[{{column.symbolize}}]?
         if val.is_a? {{column.type}}
           @{{column.id}} = val

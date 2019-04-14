@@ -5,6 +5,7 @@ require "./querying"
 require "./settings"
 require "./table"
 require "./transactions"
+require "./type"
 require "./validations"
 require "./version"
 

@@ -57,37 +57,6 @@ class Granite::Adapter::Sqlite < Granite::Adapter::Base
     end
   end
 
-  def import(table_name : String, primary_name : String, auto : String, fields, model_array, **options)
-    params = [] of DB::Any
-
-    statement = String.build do |stmt|
-      stmt << "INSERT "
-      if options["update_on_duplicate"]?
-        stmt << "OR REPLACE "
-      elsif options["ignore_on_duplicate"]?
-        stmt << "OR IGNORE "
-      end
-      stmt << "INTO #{quote(table_name)} ("
-      stmt << fields.map { |field| quote(field) }.join(", ")
-      stmt << ") VALUES "
-
-      model_array.each do |model|
-        next unless model.valid?
-        model.set_timestamps
-        stmt << '('
-        stmt << Array.new(fields.size, '?').join(',')
-        params.concat fields.map { |field| model.read_attribute field }
-        stmt << "),"
-      end
-    end.chomp(',')
-
-    log statement, params
-
-    open do |db|
-      db.exec statement, params
-    end
-  end
-
   private def last_val : String
     return "SELECT LAST_INSERT_ROWID()"
   end

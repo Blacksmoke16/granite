@@ -11,12 +11,12 @@ describe "#new" do
 end
 
 describe "#new(primary_key: value)" do
-  pending "does not set the value when the primary is defined as `auto: true`" do
-    Parent.new(id: 1).id.should be_nil
+  it "does not set the value when the primary is defined as `auto: true`" do
+    Parent.new(id: 1_i64).id.should be_nil
   end
 
   it "sets the value when the primary is defined as `auto: false`" do
-    Kvs.new(k: "foo").k.should eq("foo")
-    Kvs.new(k: "foo", v: "v").k.should eq("foo")
+    Kvs.new(k: "foo").k.should eq "foo"
+    Kvs.new(k: "foo", v: "v").k.should eq "foo"
   end
 end

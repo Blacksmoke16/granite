@@ -14,6 +14,14 @@ module Granite::Columns
       columns.find(ColumnInfo(Int64).new "id", false, true, true) { |f| f.primary }
     end
 
+    def primary_type
+      {% begin %}
+        {% pk = @type.instance_vars.find { |ivar| ann = ivar.annotation(Granite::Column); ann && ann[:primary] == true } %}
+        {% raise "A primary key must be defined for #{@type.name}" unless pk %}
+        {{pk.type}}
+      {% end %}
+    end
+
     protected def columns : Array(ColumnBase)
       columns = [] of ColumnBase
       {% begin %}
