@@ -29,8 +29,9 @@ module Granite::Type
       result{{method.id}} {{type}}
     end
 
+    # Converts a `DB::ResultSet` to `{{type}}?`.
     def convert_type(result : DB::ResultSet, t : {{type.id}}?.class) : {{type.id}}?
-      result{{method.id}} {{type}}
+      result{{method.id}} {{type}}?
     end
   {% end %}
 

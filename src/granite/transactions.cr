@@ -127,26 +127,6 @@ module Granite::Transactions
     destroy || raise Granite::RecordNotDestroyed.new(self.class.name, self)
   end
 
-  def update(**args)
-    update(args.to_h)
-  end
-
-  def update(args : Hash(Symbol | String, DB::Any))
-    set_attributes(args)
-
-    save
-  end
-
-  def update!(**args)
-    update!(args.to_h)
-  end
-
-  def update!(args : Hash(Symbol | String, DB::Any))
-    set_attributes(args)
-
-    save!
-  end
-
   # Returns true if this object hasn't been saved yet.
   @[JSON::Field(ignore: true)]
   @[YAML::Field(ignore: true)]
@@ -158,7 +138,7 @@ module Granite::Transactions
   getter? destroyed : Bool = false
 
   # Returns true if the record is persisted.
-  def persisted?
+  def persisted? : Bool
     !(new_record? || destroyed?)
   end
 end
